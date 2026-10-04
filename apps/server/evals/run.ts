@@ -15,7 +15,11 @@ const forbidden =
 const PAUSE_MS = 4500
 
 const dir = import.meta.dirname
-const only = process.argv.slice(2).findLast((arg) => arg !== "--") ?? ""
+const only =
+  process.argv
+    .slice(2)
+    .filter((arg) => arg !== "--")
+    .at(-1) ?? ""
 const cases: Case[] = readFileSync(join(dir, "cases.jsonl"), "utf8")
   .trim()
   .split("\n")
