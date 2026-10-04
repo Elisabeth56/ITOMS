@@ -11,8 +11,13 @@ export const suggestFixSchema = z.object({
 /** What the model must return. Checked before anything reaches the employee. */
 export const suggestionSchema = z.object({
   can_help: z.boolean(),
-  summary: z.string().trim().min(1).max(400),
-  steps: z.array(z.string().trim().min(1).max(300)).max(5),
+  summary: z.string().trim().min(1).max(600),
+  // models often leave steps out when handing over to IT, so a missing list means none
+  steps: z
+    .array(z.string().trim().min(1).max(300))
+    .max(5)
+    .nullish()
+    .transform((steps) => steps ?? []),
 })
 
 export type SuggestFixInput = z.infer<typeof suggestFixSchema>

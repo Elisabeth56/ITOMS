@@ -18,6 +18,7 @@ export async function generateSuggestion(input: SuggestFixInput) {
 
   // one retry, telling the model what was wrong with its first answer
   let message = request
+  let rejection = ""
   for (let attempt = 0; attempt < 2; attempt++) {
     const { data, model, tokens } = await generateJson(prompt, message)
     const parsed = suggestionSchema.safeParse(data)
@@ -27,12 +28,14 @@ export async function generateSuggestion(input: SuggestFixInput) {
         : { ...parsed.data, steps: [] }
       return { suggestion, model, tokens }
     }
+    rejection = parsed.error.message
     message = `${request}\n\nYour last answer was rejected: ${parsed.error.message}. Reply again with valid JSON.`
   }
   throw new AppError(
     502,
     "ai_bad_answer",
     "The assistant could not come up with an answer. You can still send your request to IT.",
+    { rejection },
   )
 }
 
