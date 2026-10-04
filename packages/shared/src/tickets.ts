@@ -39,6 +39,8 @@ export const createTicketSchema = z.object({
   description: z.string().trim().min(1).max(5000),
   category: z.enum(ticketCategories),
   asset_id: z.uuid().optional(),
+  // set when the employee tried the AI quick fix first and it did not solve the problem
+  suggestion_id: z.uuid().optional(),
 })
 
 export const updateTicketSchema = z

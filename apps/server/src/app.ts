@@ -5,6 +5,7 @@ import { pinoHttp } from "pino-http"
 import { requireUser } from "./auth"
 import { env } from "./env"
 import { errorHandler, notFound } from "./errors"
+import { assistRouter } from "./features/assist/router"
 import { ticketsRouter } from "./features/tickets/router"
 
 export const app = express()
@@ -21,6 +22,7 @@ app.get("/me", requireUser, (req, res) => {
   res.json(req.user)
 })
 app.use("/tickets", requireUser, ticketsRouter)
+app.use("/assist", requireUser, assistRouter)
 
 app.use(notFound)
 app.use(errorHandler)

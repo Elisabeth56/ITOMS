@@ -82,6 +82,12 @@ export async function createTicket(user: User, input: CreateTicketInput) {
       [input.title, input.description, input.category, input.asset_id ?? null, user.id],
     )
     await logEvent(tx, rows[0]!.id, user.id, "created", null, "open")
+    if (input.suggestion_id) {
+      await tx.query(
+        "update ai_suggestions set outcome = 'ticket_filed', ticket_id = $1 where id = $2 and user_id = $3",
+        [rows[0]!.id, input.suggestion_id, user.id],
+      )
+    }
     return rows[0]!.id
   })
   return findTicket(pool, user, id)
@@ -126,7 +132,17 @@ export async function getTicket(user: User, id: string) {
      where e.ticket_id = $1 order by e.created_at`,
     [id],
   )
-  return { ...ticket, comments: comments.rows, events: events.rows }
+  // what the AI quick fix suggested before this ticket was filed, so IT does not repeat it
+  const suggestion = await pool.query(
+    "select summary, steps from ai_suggestions where ticket_id = $1 order by created_at desc limit 1",
+    [id],
+  )
+  return {
+    ...ticket,
+    comments: comments.rows,
+    events: events.rows,
+    suggestion: suggestion.rows[0] ?? null,
+  }
 }
 
 export async function updateTicket(user: User, id: string, input: UpdateTicketInput) {
