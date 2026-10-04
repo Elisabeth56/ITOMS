@@ -7,3 +7,5 @@ dist
 .DS_Store
 coverage
 apps/server/evals/results
+.next
+next-env.d.ts

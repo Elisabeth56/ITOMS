@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+
+/* ITOMS design tokens (Service tag). Light values here, dark values below. */
+@theme {
+  --color-ground: #eceee9;
+  --color-surface: #f8f9f6;
+  --color-sunken: #e3e6e1;
+  --color-ink: #22282a;
+  --color-ink-2: #4c5456;
+  --color-ink-3: #5c6466;
+  --color-hairline: #aeb5b1;
+  --color-accent: #1f4f4c;
+  --color-on-accent: #f8f9f6;
+  --color-action: #bfe3d6;
+  --color-on-action: #143533;
+  --color-urgent: #7a2a1f;
+  --color-urgent-tint: #f3ddd8;
+
+  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --radius-tag: 12px;
+  --radius-card: 20px;
+  --radius-panel: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-ground: #171b1b;
+    --color-surface: #202626;
+    --color-sunken: #2a3131;
+    --color-ink: #e9ece8;
+    --color-ink-2: #b9c0bd;
+    --color-ink-3: #98a19e;
+    --color-hairline: #4a5553;
+    --color-accent: #8ccfbe;
+    --color-on-accent: #12201e;
+    --color-action: #2c5f58;
+    --color-on-action: #ddf1e9;
+    --color-urgent: #f0b3a8;
+    --color-urgent-tint: #4a2620;
+    color-scheme: dark;
+  }
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* the one signature motion: a device tag flips when it changes hands */
+@keyframes tag-flip {
+  from {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+}
+.tag-flip {
+  animation: tag-flip 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tag-flip {
+    animation: none;
+  }
+}
