@@ -15,12 +15,13 @@ const forbidden =
 const PAUSE_MS = 4500
 
 const dir = import.meta.dirname
+const only = process.argv.slice(2).findLast((arg) => arg !== "--") ?? ""
 const cases: Case[] = readFileSync(join(dir, "cases.jsonl"), "utf8")
   .trim()
   .split("\n")
   .map((line) => JSON.parse(line))
   // optional filter: `pnpm eval Excel` runs only the cases whose title contains "Excel"
-  .filter((item: Case) => item.title.toLowerCase().includes((process.argv[2] ?? "").toLowerCase()))
+  .filter((item: Case) => item.title.toLowerCase().includes(only.toLowerCase()))
 
 const rows = []
 for (const { can_help: expected, ...input } of cases) {
