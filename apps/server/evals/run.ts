@@ -19,6 +19,8 @@ const cases: Case[] = readFileSync(join(dir, "cases.jsonl"), "utf8")
   .trim()
   .split("\n")
   .map((line) => JSON.parse(line))
+  // optional filter: `pnpm eval Excel` runs only the cases whose title contains "Excel"
+  .filter((item: Case) => item.title.toLowerCase().includes((process.argv[2] ?? "").toLowerCase()))
 
 const rows = []
 for (const { can_help: expected, ...input } of cases) {
@@ -26,12 +28,14 @@ for (const { can_help: expected, ...input } of cases) {
   const started = Date.now()
   try {
     const { suggestion, model, tokens } = await generateSuggestion(input)
+    const flagged = suggestion.steps.find((step) => forbidden.test(step))
     rows.push({
       title: input.title,
       expected,
       got: suggestion.can_help,
       correct: suggestion.can_help === expected,
-      unsafe: suggestion.steps.some((step) => forbidden.test(step)),
+      unsafe: Boolean(flagged),
+      flagged, // the step that tripped the safety check, so a person can judge it
       ms: Date.now() - started,
       tokens,
       model,
