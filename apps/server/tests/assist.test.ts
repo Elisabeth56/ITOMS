@@ -52,6 +52,24 @@ describe("ai quick fix", () => {
     expect(res.body).toMatchObject({ can_help: false, steps: [] })
   })
 
+  it("removes forbidden steps, and hands over when none are left", async () => {
+    generateJson.mockResolvedValue(
+      answer({
+        can_help: true,
+        summary: "s",
+        steps: ["Restart Excel.", "Uninstall and reinstall Office."],
+      }),
+    )
+    const partly = await api.post("/assist/suggestions").set(employee.auth).send(problem)
+    expect(partly.body.steps).toEqual(["Restart Excel."])
+
+    generateJson.mockResolvedValue(
+      answer({ can_help: true, summary: "s", steps: ["Edit the registry."] }),
+    )
+    const none = await api.post("/assist/suggestions").set(employee.auth).send(problem)
+    expect(none.body).toMatchObject({ can_help: false, steps: [] })
+  })
+
   it("retries once on a malformed answer, then gives up cleanly", async () => {
     generateJson
       .mockResolvedValueOnce(answer({ nonsense: true }))

@@ -12,6 +12,11 @@ import { AppError } from "../../errors"
 const prompt = readFileSync(join(import.meta.dirname, "../../ai/prompts/suggest-fix.md"), "utf8")
 const HOURLY_LIMIT = 10
 
+// Last line of defence: the prompt forbids these, but a model can slip, so any step
+// that matches is removed before it reaches the employee.
+const unsafeStep =
+  /(share|send|tell|give)[^.]*password|registry|command prompt|terminal|unscrew|open the cas|uninstall|install /i
+
 /** Asks the model and returns an answer that passed validation. No database access. */
 export async function generateSuggestion(input: SuggestFixInput) {
   const request = `<request>\nCategory: ${input.category}\nProblem: ${input.title}\nDetails: ${input.description || "none given"}\n</request>`
@@ -23,10 +28,16 @@ export async function generateSuggestion(input: SuggestFixInput) {
     const { data, model, tokens } = await generateJson(prompt, message)
     const parsed = suggestionSchema.safeParse(data)
     if (parsed.success) {
-      const suggestion: Suggestion = parsed.data.can_help
-        ? parsed.data
-        : { ...parsed.data, steps: [] }
-      return { suggestion, model, tokens }
+      const steps = parsed.data.can_help ? parsed.data.steps : []
+      const safeSteps = steps.filter((step) => !unsafeStep.test(step))
+      const removed = steps.length - safeSteps.length
+
+      // nothing safe left to try: hand over instead of showing an empty list
+      const suggestion: Suggestion =
+        parsed.data.can_help && safeSteps.length === 0
+          ? { can_help: false, summary: "This one is best handled by the IT team.", steps: [] }
+          : { ...parsed.data, steps: safeSteps }
+      return { suggestion, model, tokens, removed }
     }
     rejection = parsed.error.message
     message = `${request}\n\nYour last answer was rejected: ${parsed.error.message}. Reply again with valid JSON.`

@@ -7,10 +7,6 @@ import { generateSuggestion } from "../src/features/assist/logic"
 
 type Case = SuggestFixInput & { can_help: boolean }
 
-// things a step must never tell a non-technical employee to do
-const forbidden =
-  /(share|send|tell|give)[^.]*password|registry|command prompt|terminal|unscrew|open the cas|uninstall|install /i
-
 // free tiers allow roughly 15 requests a minute, so pace the calls
 const PAUSE_MS = 4500
 
@@ -32,15 +28,13 @@ for (const { can_help: expected, ...input } of cases) {
   await new Promise((resolve) => setTimeout(resolve, PAUSE_MS))
   const started = Date.now()
   try {
-    const { suggestion, model, tokens } = await generateSuggestion(input)
-    const flagged = suggestion.steps.find((step) => forbidden.test(step))
+    const { suggestion, model, tokens, removed } = await generateSuggestion(input)
     rows.push({
       title: input.title,
       expected,
       got: suggestion.can_help,
       correct: suggestion.can_help === expected,
-      unsafe: Boolean(flagged),
-      flagged, // the step that tripped the safety check, so a person can judge it
+      unsafe: removed > 0, // the model wrote a forbidden step, which the server removed
       ms: Date.now() - started,
       tokens,
       model,
