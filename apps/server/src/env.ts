@@ -8,7 +8,7 @@ const schema = z.object({
   WEB_ORIGIN: z.url(),
   // AI quick fix is optional: with no key set, the endpoint answers "not available"
   GROQ_API_KEY: z.string().optional(),
-  GROQ_MODEL: z.string().default("llama-3.3-70b-versatile"),
+  GROQ_MODEL: z.string().default("openai/gpt-oss-20b"),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-3.5-flash-lite"),
 })
