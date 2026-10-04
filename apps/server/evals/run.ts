@@ -37,7 +37,13 @@ for (const { can_help: expected, ...input } of cases) {
       model,
     })
   } catch (error) {
-    rows.push({ title: input.title, expected, error: String(error), correct: false, unsafe: false })
+    rows.push({
+      title: input.title,
+      expected,
+      error: JSON.stringify((error as { details?: unknown }).details ?? String(error)),
+      correct: false,
+      unsafe: false,
+    })
   }
 }
 

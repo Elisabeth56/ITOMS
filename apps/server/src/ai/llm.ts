@@ -26,6 +26,9 @@ export type Generated = { data: unknown; model: string; tokens: number }
 
 /** Asks for a JSON answer, trying each configured provider until one responds. */
 export async function generateJson(system: string, user: string): Promise<Generated> {
+  // why each provider was skipped, kept for the log and the eval (never shown to employees)
+  const failures: string[] = providers.length ? [] : ["no provider key is set"]
+
   for (const provider of providers) {
     try {
       const response = await fetch(provider.url, {
@@ -42,7 +45,13 @@ export async function generateJson(system: string, user: string): Promise<Genera
         }),
         signal: AbortSignal.timeout(15_000),
       })
-      if (!response.ok) continue // rate limited or down: try the next provider
+      if (!response.ok) {
+        // rate limited, bad key or unknown model: note it and try the next provider
+        failures.push(
+          `${provider.name} ${response.status}: ${(await response.text()).slice(0, 200)}`,
+        )
+        continue
+      }
 
       const body = await response.json()
       return {
@@ -50,13 +59,14 @@ export async function generateJson(system: string, user: string): Promise<Genera
         model: `${provider.name}/${provider.model}`,
         tokens: body.usage?.total_tokens ?? 0,
       }
-    } catch {
-      continue // timeout, network error or unparseable answer
+    } catch (error) {
+      failures.push(`${provider.name}: ${String(error)}`) // timeout, network or unparseable answer
     }
   }
   throw new AppError(
     503,
     "ai_unavailable",
     "The assistant is not available right now. You can still send your request to IT.",
+    { failures },
   )
 }

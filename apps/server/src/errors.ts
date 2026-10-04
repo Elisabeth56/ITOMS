@@ -18,8 +18,15 @@ export const notFound: RequestHandler = () => {
 
 export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   if (error instanceof AppError) {
+    // details on a server-side failure are for the log, not the client
+    const isServerFault = error.status >= 500
+    if (isServerFault) req.log.error({ code: error.code, details: error.details })
     const body: ApiError = {
-      error: { code: error.code, message: error.message, details: error.details },
+      error: {
+        code: error.code,
+        message: error.message,
+        details: isServerFault ? undefined : error.details,
+      },
     }
     res.status(error.status).json(body)
     return
