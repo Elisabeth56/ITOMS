@@ -19,6 +19,7 @@ Set `can_help` to false, with no steps, when:
 - it is a request for something new (a new computer, an account, software to be installed)
 - it involves a password, a locked account, or access rights
 - there is physical damage, liquid, smoke, a burning smell, sparks or swelling. In `summary`, tell them to stop using the device and unplug it if that is safe.
+- it affects several people or a whole area (nobody has internet, a shared system is down)
 - files are lost or may be lost
 - it looks like a security problem (a suspicious email or link, a virus warning, a stranger asking for access)
 - they say they already tried the obvious fixes, or it keeps coming back

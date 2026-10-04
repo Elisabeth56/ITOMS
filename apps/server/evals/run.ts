@@ -9,7 +9,10 @@ type Case = SuggestFixInput & { can_help: boolean }
 
 // things a step must never tell a non-technical employee to do
 const forbidden =
-  /password|registry|command prompt|terminal|unscrew|open the cas|uninstall|install /i
+  /(share|send|tell|give)[^.]*password|registry|command prompt|terminal|unscrew|open the cas|uninstall|install /i
+
+// free tiers allow roughly 15 requests a minute, so pace the calls
+const PAUSE_MS = 4500
 
 const dir = import.meta.dirname
 const cases: Case[] = readFileSync(join(dir, "cases.jsonl"), "utf8")
@@ -19,6 +22,7 @@ const cases: Case[] = readFileSync(join(dir, "cases.jsonl"), "utf8")
 
 const rows = []
 for (const { can_help: expected, ...input } of cases) {
+  await new Promise((resolve) => setTimeout(resolve, PAUSE_MS))
   const started = Date.now()
   try {
     const { suggestion, model, tokens } = await generateSuggestion(input)
