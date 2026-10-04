@@ -7,7 +7,8 @@
     "dev": "tsx watch --env-file=.env src/index.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx --env-file=.env evals/run.ts"
   },
   "dependencies": {
     "@itoms/shared": "workspace:*",
