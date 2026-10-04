@@ -2,11 +2,14 @@ import cors from "cors"
 import express from "express"
 import helmet from "helmet"
 import { pinoHttp } from "pino-http"
-import { requireUser } from "./auth"
+import { requireRole, requireUser } from "./auth"
 import { env } from "./env"
 import { errorHandler, notFound } from "./errors"
+import { assetsRouter } from "./features/assets/router"
 import { assistRouter } from "./features/assist/router"
+import { dashboardRouter } from "./features/dashboard/router"
 import { ticketsRouter } from "./features/tickets/router"
+import { usersRouter } from "./features/users/router"
 
 export const app = express()
 
@@ -23,6 +26,9 @@ app.get("/me", requireUser, (req, res) => {
 })
 app.use("/tickets", requireUser, ticketsRouter)
 app.use("/assist", requireUser, assistRouter)
+app.use("/assets", requireUser, assetsRouter)
+app.use("/dashboard", requireUser, requireRole("it_staff"), dashboardRouter)
+app.use("/users", requireUser, usersRouter)
 
 app.use(notFound)
 app.use(errorHandler)

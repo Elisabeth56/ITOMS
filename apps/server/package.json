@@ -8,10 +8,12 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p .",
     "test": "vitest run",
-    "eval": "tsx --env-file=.env evals/run.ts"
+    "eval": "tsx --env-file=.env evals/run.ts",
+    "eval:unseen": "EVAL_CASES=cases-unseen.jsonl tsx --env-file=.env evals/run.ts"
   },
   "dependencies": {
     "@itoms/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "helmet": "^8.3.0",

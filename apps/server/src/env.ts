@@ -6,6 +6,8 @@ const schema = z.object({
   DATABASE_URL: z.url(),
   SUPABASE_URL: z.url(),
   WEB_ORIGIN: z.url(),
+  // only needed for inviting people; never expose it to the browser
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   // AI quick fix is optional: with no key set, the endpoint answers "not available"
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default("openai/gpt-oss-20b"),
