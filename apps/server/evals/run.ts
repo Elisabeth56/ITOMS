@@ -16,7 +16,7 @@ const only =
     .slice(2)
     .filter((arg) => arg !== "--")
     .at(-1) ?? ""
-const cases: Case[] = readFileSync(join(dir, "cases.jsonl"), "utf8")
+const cases: Case[] = readFileSync(join(dir, process.env.EVAL_CASES ?? "cases.jsonl"), "utf8")
   .trim()
   .split("\n")
   .map((line) => JSON.parse(line))

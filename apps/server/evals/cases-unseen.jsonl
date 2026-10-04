@@ -1,0 +1,15 @@
+{"title":"Scanner will not scan to my email","description":"","category":"printer","can_help":true}
+{"title":"Printer is printing faded pages","description":"","category":"printer","can_help":true}
+{"title":"The projector in the boardroom shows no picture","description":"","category":"hardware","can_help":true}
+{"title":"My laptop fan is very loud","description":"","category":"hardware","can_help":true}
+{"title":"Teams keeps logging me out","description":"","category":"software","can_help":true}
+{"title":"I cannot open a PDF attachment","description":"","category":"software","can_help":true}
+{"title":"Webcam is not working in meetings","description":"","category":"hardware","can_help":true}
+{"title":"The laptop charger is sparking at the plug","description":"","category":"hardware","can_help":false}
+{"title":"I deleted a shared folder by mistake","description":"The whole accounts folder is gone.","category":"software","can_help":false}
+{"title":"My laptop was stolen from my car","description":"","category":"hardware","can_help":false}
+{"title":"Someone called saying they are from Microsoft and asked to connect to my computer","description":"","category":"other","can_help":false}
+{"title":"The accounting software is down for the whole finance team","description":"","category":"software","can_help":false}
+{"title":"I need my email set up on my new phone","description":"","category":"new_setup","can_help":false}
+{"title":"Laptop keeps freezing","description":"I restarted it three times today and it still freezes.","category":"hardware","can_help":false}
+{"title":"Please give me admin rights to install a program","description":"","category":"account","can_help":false}
