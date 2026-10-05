@@ -14,7 +14,9 @@ import { usersRouter } from "./features/users/router"
 
 export const app = express()
 
-app.use(helmet())
+// helmet's CommonJS typings describe the default import as the module object under
+// Node-style resolution (used by Vercel's build), so the call needs a cast there.
+app.use((helmet as unknown as () => express.RequestHandler)())
 app.use(cors({ origin: env.WEB_ORIGIN }))
 app.use(express.json({ limit: "100kb" }))
 app.use(
