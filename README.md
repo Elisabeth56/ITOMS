@@ -2,6 +2,8 @@
 
 Internal IT Operations Management System: one place for a company's IT team to take support requests, track devices, and keep each device's repair history.
 
+Live: https://itoms-elisabeth-nnamanis-projects.vercel.app
+
 ## What it does
 
 - Employees report a problem in under a minute and follow it until it is fixed.
