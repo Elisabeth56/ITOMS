@@ -36,7 +36,7 @@ dashboardRouter.get("/", async (_req, res) => {
               t.id as ticket_id, 'IT-' || lpad(t.number::text, 4, '0') as ticket_ref, t.title
        from ticket_events e
        join tickets t on t.id = e.ticket_id
-       join profiles p on p.id = e.actor_id
+       left join profiles p on p.id = e.actor_id
        order by e.created_at desc limit 10`,
     ),
   ])

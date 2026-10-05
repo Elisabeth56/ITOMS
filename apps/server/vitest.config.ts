@@ -12,6 +12,7 @@ export default defineConfig({
       DATABASE_URL: process.env.DATABASE_URL,
       SUPABASE_URL: "http://localhost:54321",
       WEB_ORIGIN: "http://localhost:3000",
+      CRON_SECRET: "test-cron-secret",
     },
   },
 })

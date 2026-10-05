@@ -176,3 +176,29 @@ describe("lifecycle", () => {
     )
   })
 })
+
+describe("automatic closing", () => {
+  it("closes tickets resolved more than 3 days ago, and only for the scheduler", async () => {
+    const stale = await fileTicket(employee)
+    const fresh = await fileTicket(employee)
+    for (const ticket of [stale, fresh]) {
+      await api.patch(`/tickets/${ticket.id}`).set(staff.auth).send({ assignee_id: staff.id })
+      await api.patch(`/tickets/${ticket.id}`).set(staff.auth).send({ status: "in_progress" })
+      await api.patch(`/tickets/${ticket.id}`).set(staff.auth).send({ status: "resolved" })
+    }
+    await pool.query("update tickets set resolved_at = now() - interval '4 days' where id = $1", [
+      stale.id,
+    ])
+
+    expect((await api.get("/internal/close-stale-tickets")).status).toBe(401)
+    const run = await api
+      .get("/internal/close-stale-tickets")
+      .set("Authorization", "Bearer test-cron-secret")
+    expect(run.body).toEqual({ closed: 1 })
+
+    const closed = await api.get(`/tickets/${stale.id}`).set(employee.auth)
+    expect(closed.body.status).toBe("closed")
+    expect(closed.body.events.at(-1)).toMatchObject({ to_value: "closed", actor_name: null })
+    expect((await api.get(`/tickets/${fresh.id}`).set(employee.auth)).body.status).toBe("resolved")
+  })
+})

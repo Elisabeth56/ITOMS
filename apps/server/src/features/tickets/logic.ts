@@ -58,7 +58,7 @@ async function findTicket(db: Db, user: User, id: string, lock = false) {
 function logEvent(
   db: Db,
   ticketId: string,
-  actorId: string,
+  actorId: string | null,
   type: string,
   from: string | null,
   to: string | null,
@@ -128,7 +128,7 @@ export async function getTicket(user: User, id: string) {
   )
   const events = await pool.query(
     `select e.id, e.type, e.from_value, e.to_value, e.created_at, p.full_name as actor_name
-     from ticket_events e join profiles p on p.id = e.actor_id
+     from ticket_events e left join profiles p on p.id = e.actor_id
      where e.ticket_id = $1 order by e.created_at`,
     [id],
   )
@@ -217,4 +217,21 @@ export async function addComment(user: User, id: string, input: CreateCommentInp
     [id, user.id, input.body, input.is_internal],
   )
   return { ...rows[0], author_name: user.full_name }
+}
+
+const AUTO_CLOSE_DAYS = 3
+
+/** Closes tickets that were resolved days ago and never confirmed. Returns how many. */
+export async function closeStaleTickets() {
+  return transaction(async (tx) => {
+    const { rows } = await tx.query<{ id: string }>(
+      `update tickets set status = 'closed', closed_at = now()
+       where status = 'resolved' and resolved_at < now() - make_interval(days => $1)
+       returning id`,
+      [AUTO_CLOSE_DAYS],
+    )
+    // no actor: the event shows as done automatically
+    for (const { id } of rows) await logEvent(tx, id, null, "status_changed", "resolved", "closed")
+    return rows.length
+  })
 }

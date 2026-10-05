@@ -37,7 +37,7 @@ export type TicketEvent = {
   from_value: string | null
   to_value: string | null
   created_at: string
-  actor_name: string
+  actor_name: string | null // null when the system did it
 }
 
 export type TicketDetail = Ticket & {
