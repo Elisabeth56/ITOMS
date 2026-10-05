@@ -1,7 +1,12 @@
 import pg from "pg"
 import { env } from "./env"
 
-export const pool = new pg.Pool({ connectionString: env.DATABASE_URL })
+// a small pool: on serverless hosts many copies of the API share the database's connection limit
+export const pool = new pg.Pool({ connectionString: env.DATABASE_URL, max: 3 })
+
+// The database can drop an idle connection (restart, pooler timeout). Without this handler
+// that would crash the whole API; the pool simply opens a new connection on the next query.
+pool.on("error", (error) => console.error("idle database connection lost:", error.message))
 
 /** Anything that can run a query: the pool, or a client inside a transaction. */
 export type Db = Pick<pg.Pool, "query">
