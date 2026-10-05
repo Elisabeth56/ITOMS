@@ -16,7 +16,9 @@ export async function inviteAuthUser(email: string): Promise<string> {
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
   })
-  const { data, error } = await supabase.auth.admin.inviteUserByEmail(email)
+  const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${env.WEB_ORIGIN}/welcome`,
+  })
   if (error || !data.user) {
     throw new AppError(422, "invite_failed", error?.message ?? "The invite could not be sent.")
   }

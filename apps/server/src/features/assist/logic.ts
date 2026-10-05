@@ -1,15 +1,13 @@
 // Optional AI quick fix. An employee describes a problem and gets safe steps to try,
 // or is told to send it to IT. Every suggestion is stored so IT can see what was tried
 // and the project can report how many requests were solved without a ticket.
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
 import { suggestionSchema, type SuggestFixInput, type Suggestion } from "@itoms/shared"
 import { generateJson } from "../../ai/llm"
+import { suggestFixPrompt as prompt } from "../../ai/prompts/suggest-fix"
 import type { User } from "../../auth"
 import { pool } from "../../db"
 import { AppError } from "../../errors"
 
-const prompt = readFileSync(join(import.meta.dirname, "../../ai/prompts/suggest-fix.md"), "utf8")
 const HOURLY_LIMIT = 10
 
 // Last line of defence: the prompt forbids these, but a model can slip, so any step

@@ -54,6 +54,17 @@ pnpm dev                                   # web on :3000, API on :4000
 | `chidi.eze@itoms.example`     | IT staff      |
 | `adaeze.okafor@itoms.example` | Employee      |
 
+## Deployment
+
+Two Vercel projects from this repository (see [ADR 006](docs/decisions/006-hosting.md)).
+
+| Project | Root directory | Needs                                                                                               |
+| ------- | -------------- | --------------------------------------------------------------------------------------------------- |
+| Web     | `apps/web`     | the three variables from `apps/web/.env.example`, with `API_URL` set to the API project's address   |
+| API     | `apps/server`  | the variables from `.env.example`; `DATABASE_URL` must be the transaction pooler string (port 6543) |
+
+In Supabase, under Authentication, URL Configuration, set the Site URL to the web address and add `<web address>/welcome` to the redirect list. Invite and password-reset emails send people there to choose a password.
+
 ## Checks
 
 ```bash
