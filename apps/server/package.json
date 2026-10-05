@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
     "start": "tsx src/index.ts",
+    "build": "esbuild src/app.ts --bundle --platform=node --format=esm --target=node22 --packages=external --alias:@itoms/shared=../../packages/shared/src/index.ts --outfile=dist/app.js",
     "typecheck": "tsc -p .",
     "test": "vitest run",
     "eval": "tsx --env-file=.env evals/run.ts",
@@ -28,6 +29,7 @@
     "@types/node": "^26.6.4",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
+    "esbuild": "^0.28.2",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "vitest": "^5.0.3"

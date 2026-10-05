@@ -13,7 +13,7 @@ ADR 001 split the system into a Next.js web app and an Express API. Both need a 
 
 ## Decision
 
-Two Vercel projects from this repository: `apps/web` and `apps/server`. `src/index.ts` exports the Express app for Vercel and still listens on a port everywhere else, so local development and the tests are unchanged.
+Two Vercel projects from this repository: `apps/web` and `apps/server`. On Vercel, `pnpm build` bundles the API and the shared package into one file with esbuild and `api/index.js` serves it as a function. `src/index.ts` still listens on a port everywhere else, so local development and the tests are unchanged.
 
 ## Consequences
 
