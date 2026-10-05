@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { hasRole } from "@itoms/shared"
+import { Logo } from "@/components/logo"
 import { Nav } from "@/components/nav"
 import { getMe } from "@/lib/api"
 import { signOut } from "../sign-in/actions"
@@ -24,8 +25,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div className="px-5 pt-5 pb-12 sm:px-8">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
-          <Link href="/" className="text-lg font-medium tracking-[-0.01em]">
-            ITOMS
+          <Link href="/" aria-label="ITOMS home">
+            <Logo />
           </Link>
           <Nav links={links} />
           <form action={signOut} className="flex items-center gap-3">

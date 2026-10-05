@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/instrument-sans";
+@import "@fontsource-variable/unbounded";
 @import "@fontsource/geist-mono/400.css";
 @import "@fontsource/geist-mono/500.css";
 
@@ -21,6 +22,7 @@
 
   --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-logo: "Unbounded Variable", "Instrument Sans Variable", system-ui, sans-serif;
 
   --radius-tag: 12px;
   --radius-card: 20px;

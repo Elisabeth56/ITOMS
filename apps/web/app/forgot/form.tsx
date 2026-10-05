@@ -2,32 +2,33 @@
 
 import Link from "next/link"
 import { useActionState } from "react"
-import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
-import { signIn } from "./actions"
+import { sendResetLink } from "./actions"
 
-export function SignInForm() {
-  const [state, action, pending] = useActionState(signIn, {})
+export function ForgotForm() {
+  const [state, action, pending] = useActionState(sendResetLink, {})
+  if (state.ok) {
+    return (
+      <div className="flex flex-col gap-4 rounded-panel bg-surface p-6">
+        <p>If that email has an account, a link to set a new password is on its way.</p>
+        <Link href="/sign-in" className="text-accent underline-offset-4 hover:underline">
+          Back to sign in
+        </Link>
+      </div>
+    )
+  }
   return (
     <form action={action} className="flex flex-col gap-4 rounded-panel bg-surface p-6">
       <Field label="Work email" name="email" type="email" autoComplete="username" required />
-      <Field
-        label="Password"
-        name="password"
-        type="password"
-        autoComplete="current-password"
-        required
-      />
-      <FormError message={state.error} />
       <Button variant="strong" disabled={pending} className="min-h-12">
-        {pending ? "Signing in" : "Sign in"}
+        {pending ? "Sending" : "Email me a link"}
       </Button>
       <Link
-        href="/forgot"
+        href="/sign-in"
         className="self-center py-2 text-accent underline-offset-4 hover:underline"
       >
-        Forgot your password?
+        Back to sign in
       </Link>
     </form>
   )

@@ -134,7 +134,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                 <li key={event.id}>
                   <p>{describe(event, names)}</p>
                   <p className="text-sm text-ink-3">
-                    {event.actor_name} · {timeAgo(event.created_at)}
+                    {event.actor_name ?? "Automatically"} · {timeAgo(event.created_at)}
                   </p>
                 </li>
               ))}

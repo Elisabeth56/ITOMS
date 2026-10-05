@@ -23,8 +23,11 @@ export async function proxy(request: NextRequest) {
   )
 
   const { data } = await supabase.auth.getUser()
-  const onSignIn = request.nextUrl.pathname.startsWith("/sign-in")
-  if (!data.user && !onSignIn) return NextResponse.redirect(new URL("/sign-in", request.url))
+  const path = request.nextUrl.pathname
+  const onSignIn = path.startsWith("/sign-in")
+  // pages a signed-out person must reach: sign in, ask for a reset link, accept an emailed link
+  const isPublic = onSignIn || path.startsWith("/forgot") || path.startsWith("/welcome")
+  if (!data.user && !isPublic) return NextResponse.redirect(new URL("/sign-in", request.url))
   if (data.user && onSignIn) return NextResponse.redirect(new URL("/", request.url))
   return response
 }
