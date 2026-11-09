@@ -7,8 +7,9 @@ import { generateSuggestion } from "../src/features/assist/logic"
 
 type Case = SuggestFixInput & { can_help: boolean }
 
-// free tiers allow roughly 15 requests a minute, so pace the calls
-const PAUSE_MS = 4500
+// free tiers cap requests and tokens per minute; at about 1,100 tokens a case this pace
+// stays under both, so a full run of both case sets finishes without rate-limit errors
+const PAUSE_MS = 8000
 
 const dir = import.meta.dirname
 const only =
