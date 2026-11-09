@@ -34,6 +34,7 @@ type Ticket = {
   resolution: string | null
   due_at: string
   escalated_at: string | null
+  is_late: boolean
 }
 
 const ticketSelect = `
@@ -41,7 +42,8 @@ const ticketSelect = `
          t.category, t.priority, t.status, t.reporter_id, reporter.full_name as reporter_name,
          t.assignee_id, assignee.full_name as assignee_name, t.asset_id,
          t.created_at, t.updated_at, t.resolved_at, t.closed_at, t.resolution, t.due_at,
-         t.escalated_at
+         t.escalated_at,
+         (t.due_at < now() and t.status not in ('resolved', 'closed')) as is_late
   from tickets t
   join profiles reporter on reporter.id = t.reporter_id
   left join profiles assignee on assignee.id = t.assignee_id`
@@ -106,6 +108,7 @@ export async function listTickets(user: User, query: ListTicketsQuery) {
     params.push(query[column])
     where.push(`t.${column} = $${params.length}`)
   }
+  if (query.late) where.push("t.due_at < now() and t.status not in ('resolved', 'closed')")
   if (query.escalated)
     where.push("t.escalated_at is not null and t.status not in ('resolved', 'closed')")
   const filter = `where ${where.join(" and ")}`
@@ -115,7 +118,7 @@ export async function listTickets(user: User, query: ListTicketsQuery) {
     params,
   )
   const { rows } = await pool.query<Ticket>(
-    `${ticketSelect} ${filter} order by t.created_at desc
+    `${ticketSelect} ${filter} order by ${query.sort === "due" ? "t.due_at" : "t.created_at desc"}
      limit $${params.length + 1} offset $${params.length + 2}`,
     [...params, query.page_size, (query.page - 1) * query.page_size],
   )

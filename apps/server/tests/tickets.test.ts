@@ -273,3 +273,27 @@ describe("escalation", () => {
     expect(list.body.items.every((t: { escalated_at: string | null }) => t.escalated_at)).toBe(true)
   })
 })
+
+describe("late tickets", () => {
+  it("flags late tickets, filters them and sorts the queue by due time", async () => {
+    const late = await fileTicket(employee)
+    const onTime = await fileTicket(employee)
+    await pool.query("update tickets set created_at = now() - interval '2 days' where id = $1", [
+      late.id,
+    ])
+    // the trigger only recomputes on a priority change, so set the old due time directly
+    await pool.query("update tickets set due_at = now() - interval '1 day' where id = $1", [
+      late.id,
+    ])
+
+    const lateList = await api.get("/tickets?late=true&page_size=50").set(staff.auth)
+    const ids = lateList.body.items.map((t: { id: string }) => t.id)
+    expect(ids).toContain(late.id)
+    expect(ids).not.toContain(onTime.id)
+    expect(lateList.body.items.every((t: { is_late: boolean }) => t.is_late)).toBe(true)
+
+    const queue = await api.get("/tickets?sort=due&page_size=50").set(staff.auth)
+    const dueTimes = queue.body.items.map((t: { due_at: string }) => Date.parse(t.due_at))
+    expect(dueTimes).toEqual([...dueTimes].sort((a, b) => a - b))
+  })
+})

@@ -24,6 +24,7 @@ export type Ticket = {
   resolution: string | null
   due_at: string
   escalated_at: string | null
+  is_late: boolean
 }
 
 export type TicketComment = {
