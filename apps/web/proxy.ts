@@ -34,4 +34,5 @@ export async function proxy(request: NextRequest) {
   return response
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] }
+// static files skip the session check: images, the favicon and build output
+export const config = { matcher: ["/((?!_next/static|_next/image|images/|icon.svg|favicon.ico).*)"] }

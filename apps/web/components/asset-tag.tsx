@@ -55,7 +55,7 @@ export function AssetTag({
         />
       )}
       <span
-        className={`tick font-dot font-bold tracking-[0.04em] ${big ? "text-[40px] leading-[44px]" : "text-[26px] leading-[30px]"}`}
+        className={`tick font-dot font-bold tracking-[0.04em] whitespace-nowrap ${big ? "text-[30px] leading-[34px] sm:text-[40px] sm:leading-[44px]" : "text-[26px] leading-[30px]"}`}
       >
         {tag}
       </span>
