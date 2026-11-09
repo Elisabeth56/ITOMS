@@ -124,6 +124,7 @@ export type Person = {
   department: string | null
   role: UserRole
   is_active: boolean
+  is_demo: boolean
   created_at: string
 }
 

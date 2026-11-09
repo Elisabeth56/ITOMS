@@ -90,7 +90,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </Suspense>
       </div>
       <main className="min-w-0 flex-1 px-1 pt-4 pb-12 md:px-6">
-        <div className="mx-auto flex max-w-[1080px] flex-col gap-8">{children}</div>
+        <div className="mx-auto flex max-w-[1080px] flex-col gap-8">
+          {me.is_demo && me.role === "admin" && (
+            <p className="rounded-card bg-butter px-4 py-3 text-sm text-on-butter">
+              You are in the demo as an administrator. You can look at everything, but changes are
+              switched off.
+            </p>
+          )}
+          {children}
+        </div>
       </main>
       <CommandPalette />
     </div>

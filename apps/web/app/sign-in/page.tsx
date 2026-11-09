@@ -3,6 +3,7 @@ import Link from "next/link"
 import { AssetTag } from "@/components/asset-tag"
 import { Logo } from "@/components/logo"
 import { Pill } from "@/components/ui/pill"
+import { DemoButtons } from "./demo-buttons"
 import { SignInForm } from "./form"
 
 export const metadata = { title: "Sign in" }
@@ -26,17 +27,13 @@ export default function SignInPage() {
           <p className="text-[13px] text-ink-3">
             No account? Accounts are created by your IT admin.
           </p>
-          <div className="flex flex-col gap-2 rounded-card bg-butter px-4 py-3.5 text-sm text-on-butter">
-            <span className="font-medium text-ink">Trying the demo?</span>
+          <div className="flex flex-col gap-3 rounded-card bg-butter px-4 py-4 text-sm text-on-butter">
+            <span className="font-medium text-ink">Try the demo</span>
             <span>
-              Sign in as any role. The password for all three is{" "}
-              <span className="font-mono">itoms-demo-2026</span>.
+              Sign in as one of the seeded people. The administrator can look around but not change
+              anything.
             </span>
-            <ul className="flex flex-col gap-1 font-mono text-xs">
-              <li>adaeze.okafor@itoms.example · employee</li>
-              <li>chidi.eze@itoms.example · IT staff</li>
-              <li>amaka.obi@itoms.example · administrator</li>
-            </ul>
+            <DemoButtons />
           </div>
         </div>
       </main>

@@ -15,7 +15,7 @@ import { idParams, validate } from "../../validate"
 
 export const usersRouter = Router()
 const admin = requireRole("admin")
-const columns = "id, full_name, email, department, role, is_active, created_at"
+const columns = "id, full_name, email, department, role, is_active, is_demo, created_at"
 
 usersRouter.get("/", requireRole("it_staff"), async (_req, res) => {
   const { rows } = await pool.query(`select ${columns} from profiles order by full_name`)
