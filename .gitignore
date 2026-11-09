@@ -9,3 +9,4 @@ coverage
 apps/server/evals/results
 .next
 next-env.d.ts
+*.tsbuildinfo
