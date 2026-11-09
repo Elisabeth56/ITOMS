@@ -1,6 +1,7 @@
 # 001: Separate Express API between the web app and the database
 
 **Date:** 2026-10-04
+**Status:** Reasons superseded by [007](007-keep-express-api.md); the decision stands.
 
 ## Context
 
