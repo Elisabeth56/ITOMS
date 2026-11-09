@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react"
 import { hasRole, type Dashboard } from "@itoms/shared"
+import { CommandPalette } from "@/components/command-palette"
 import { Icon } from "@/components/icons"
 import { Sidebar, type SidebarLink } from "@/components/sidebar"
 import { api, getMe, type Me } from "@/lib/api"
@@ -91,6 +92,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <main className="min-w-0 flex-1 px-1 pt-4 pb-12 md:px-6">
         <div className="mx-auto flex max-w-[1080px] flex-col gap-8">{children}</div>
       </main>
+      <CommandPalette />
     </div>
   )
 }

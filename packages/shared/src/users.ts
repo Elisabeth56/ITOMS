@@ -31,3 +31,6 @@ export const updateMeSchema = z
 export type UpdateMeInput = z.infer<typeof updateMeSchema>
 export type InviteUserInput = z.infer<typeof inviteUserSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
+
+export const searchQuerySchema = z.object({ q: z.string().trim().min(1).max(80) })
+export type SearchQuery = z.infer<typeof searchQuerySchema>

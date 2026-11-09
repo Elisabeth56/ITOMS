@@ -241,3 +241,20 @@ describe("own profile", () => {
     expect((await api.get("/me").set(employee.auth)).body.role).toBe("employee")
   })
 })
+
+describe("search", () => {
+  it("finds devices and people for IT, and only your own things for employees", async () => {
+    const device = await addDevice({ model: "Searchable 9000" })
+    await api.post(`/assets/${device.id}/assign`).set(staff.auth).send({ employee_id: employee.id })
+
+    const staffResults = await api.get("/search?q=Searchable").set(staff.auth)
+    expect(staffResults.body.devices.map((d: { id: string }) => d.id)).toContain(device.id)
+    expect((await api.get("/search?q=Test").set(staff.auth)).body.people.length).toBeGreaterThan(0)
+
+    expect((await api.get("/search?q=Searchable").set(employee.auth)).body.devices).toHaveLength(1)
+    expect(
+      (await api.get("/search?q=Searchable").set(otherEmployee.auth)).body.devices,
+    ).toHaveLength(0)
+    expect((await api.get("/search?q=Test").set(employee.auth)).body.people).toHaveLength(0)
+  })
+})

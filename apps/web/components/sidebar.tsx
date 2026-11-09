@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import type { ReactNode } from "react"
+import { Icon } from "./icons"
 import { Logo } from "./logo"
 
 export type SidebarLink = {
@@ -36,6 +37,17 @@ export function Sidebar({ links, footer }: { links: SidebarLink[]; footer: React
       <Link href="/home" className="px-2.5 pt-1 pb-4" aria-label="ITOMS home">
         <Logo light />
       </Link>
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("itoms:search"))}
+        className="mb-3 hidden min-h-10 items-center gap-2.5 rounded-xl bg-white/10 px-3 text-left text-sm md:flex"
+      >
+        <Icon name="search" size={16} />
+        Search
+        <span className="ml-auto rounded-md border border-white/30 px-1.5 py-0.5 font-mono text-[11px]">
+          ⌘K
+        </span>
+      </button>
       <div className="flex gap-1 overflow-x-auto md:flex-col">
         {links.map((link) => {
           const active = isActive(link.href, pathname, search)

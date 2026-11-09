@@ -144,3 +144,9 @@ export type ChangeRequest = {
   decision_note: string | null
   created_at: string
 }
+
+export type SearchResults = {
+  tickets: { id: string; ref: string; title: string }[]
+  devices: { id: string; asset_tag: string; name: string; holder_name: string | null }[]
+  people: { id: string; full_name: string; email: string; role: UserRole }[]
+}

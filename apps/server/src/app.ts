@@ -11,6 +11,7 @@ import { changeRequestsRouter } from "./features/change-requests/router"
 import { dashboardRouter } from "./features/dashboard/router"
 import { closeStaleTickets } from "./features/tickets/logic"
 import { ticketsRouter } from "./features/tickets/router"
+import { searchRouter } from "./features/search/router"
 import { getProfile, updateProfile, usersRouter } from "./features/users/router"
 import { updateMeSchema } from "@itoms/shared"
 import { validate } from "./validate"
@@ -52,6 +53,7 @@ app.use("/assets", requireUser, assetsRouter)
 app.use("/change-requests", requireUser, changeRequestsRouter)
 app.use("/dashboard", requireUser, requireRole("it_staff"), dashboardRouter)
 app.use("/users", requireUser, usersRouter)
+app.use("/search", requireUser, searchRouter)
 
 app.use(notFound)
 app.use(errorHandler)
