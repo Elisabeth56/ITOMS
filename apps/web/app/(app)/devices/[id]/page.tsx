@@ -4,6 +4,7 @@ import { hasRole, type AssetDetail, type Person } from "@itoms/shared"
 import { Pill } from "@/components/ui/pill"
 import { api, ApiError, getMe } from "@/lib/api"
 import { formatDate, formatNaira, label } from "@/lib/format"
+import { ChangeRequestForm } from "@/components/change-request-form"
 import { DeviceActions } from "./actions-panel"
 
 export const metadata = { title: "Device" }
@@ -202,6 +203,7 @@ export default async function DevicePage({ params }: { params: Promise<{ id: str
           )}
         </div>
 
+        {!isStaff && device.holder_id === me.id && <ChangeRequestForm device={device} />}
         {isStaff && (
           <aside aria-label="Actions" className="min-w-0 flex-[1_1_340px]">
             <DeviceActions device={device} people={people} isAdmin={me.role === "admin"} />

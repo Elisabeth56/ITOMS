@@ -220,3 +220,21 @@ describe("people", () => {
     expect(self.status).toBe(409)
   })
 })
+
+describe("own profile", () => {
+  it("lets people change their own name and department, but not their role", async () => {
+    const res = await api
+      .patch("/me")
+      .set(employee.auth)
+      .send({ full_name: "Ada Okafor", department: "Finance" })
+    expect(res.body).toMatchObject({
+      full_name: "Ada Okafor",
+      department: "Finance",
+      role: "employee",
+    })
+
+    const sneaky = await api.patch("/me").set(employee.auth).send({ role: "admin" })
+    expect(sneaky.status).toBe(422)
+    expect((await api.get("/me").set(employee.auth)).body.role).toBe("employee")
+  })
+})

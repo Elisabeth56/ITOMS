@@ -123,7 +123,11 @@ export type Person = {
   department: string | null
   role: UserRole
   is_active: boolean
+  created_at: string
 }
+
+/** A device in the holder's own list, with the change they proposed and IT has not decided. */
+export type MyAsset = Asset & { pending_change: Record<string, string> | null }
 
 export type ChangeRequest = {
   id: string

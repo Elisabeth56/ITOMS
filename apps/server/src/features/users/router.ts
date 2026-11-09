@@ -4,6 +4,7 @@ import {
   inviteUserSchema,
   updateUserSchema,
   type InviteUserInput,
+  type UpdateMeInput,
   type UpdateUserInput,
 } from "@itoms/shared"
 import { requireRole } from "../../auth"
@@ -66,3 +67,20 @@ usersRouter.patch(
     res.json(rows[0])
   },
 )
+
+/** The signed-in person's own record, with their department. */
+export async function getProfile(id: string) {
+  const { rows } = await pool.query(`select ${columns} from profiles where id = $1`, [id])
+  return rows[0]
+}
+
+export async function updateProfile(id: string, input: UpdateMeInput) {
+  const names = Object.keys(input)
+  // column names come from the validated schema, never from raw input
+  const { rows } = await pool.query(
+    `update profiles set ${names.map((name, i) => `${name} = $${i + 2}`).join(", ")}
+     where id = $1 returning ${columns}`,
+    [id, ...Object.values(input)],
+  )
+  return rows[0]
+}

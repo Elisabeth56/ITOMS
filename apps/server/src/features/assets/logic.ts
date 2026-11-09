@@ -70,9 +70,15 @@ export async function listAssets(query: ListAssetsQuery) {
 
 /** Devices the user currently holds. */
 export async function listMyAssets(user: User) {
-  const { rows } = await pool.query(`${assetSelect} where holder.id = $1 order by a.asset_tag`, [
-    user.id,
-  ])
+  // each with the change the holder is waiting on, if any
+  const { rows } = await pool.query(
+    `select device.*, pending.proposed as pending_change
+     from (${assetSelect} where holder.id = $1) device
+     left join asset_change_requests pending
+       on pending.asset_id = device.id and pending.status = 'pending'
+     order by device.asset_tag`,
+    [user.id],
+  )
   return rows
 }
 
