@@ -3,17 +3,17 @@
 // and the project can report how many requests were solved without a ticket.
 import { suggestionSchema, type SuggestFixInput, type Suggestion } from "@itoms/shared"
 import { generateJson } from "../../ai/llm"
-import { suggestFixPrompt as prompt } from "../../ai/prompts/suggest-fix"
+import { suggestFixPrompt as prompt, suggestFixPromptVersion } from "../../ai/prompts/suggest-fix"
 import type { User } from "../../auth"
-import { pool } from "../../db"
+import { pool, transaction, type Db } from "../../db"
 import { AppError } from "../../errors"
 
 const HOURLY_LIMIT = 10
 
 // Last line of defence: the prompt forbids these, but a model can slip, so any step
 // that matches is removed before it reaches the employee.
-const unsafeStep =
-  /(share|send|tell|give)[^.]*password|registry|command prompt|terminal|unscrew|open the cas|uninstall|install /i
+export const unsafeStep =
+  /(share|send|tell|give)[^.]*password|registry|command prompt|terminal|unscrew|open the cas|uninstall|install |\bbios\b|safe mode|as administrator/i
 
 /** Asks the model and returns an answer that passed validation. No database access. */
 export async function generateSuggestion(input: SuggestFixInput) {
@@ -48,35 +48,49 @@ export async function generateSuggestion(input: SuggestFixInput) {
   )
 }
 
-export async function suggestFix(user: User, input: SuggestFixInput) {
-  const recent = await pool.query<{ count: number }>(
+function countRecent(db: Db, userId: string) {
+  return db.query<{ count: number }>(
     "select count(*)::int as count from ai_suggestions where user_id = $1 and created_at > now() - interval '1 hour'",
-    [user.id],
+    [userId],
   )
-  if (recent.rows[0]!.count >= HOURLY_LIMIT) {
-    throw new AppError(
-      429,
-      "ai_limit_reached",
-      "You have used the assistant a lot this hour. Send your request to IT instead.",
-    )
-  }
+}
+
+const limitReached = () =>
+  new AppError(
+    429,
+    "ai_limit_reached",
+    "You have used the assistant a lot this hour. Send your request to IT instead.",
+  )
+
+export async function suggestFix(user: User, input: SuggestFixInput) {
+  // cheap early refusal, before spending a model call
+  const recent = await countRecent(pool, user.id)
+  if (recent.rows[0]!.count >= HOURLY_LIMIT) throw limitReached()
 
   const { suggestion, model, tokens } = await generateSuggestion(input)
-  const { rows } = await pool.query<{ id: string }>(
-    `insert into ai_suggestions (user_id, category, title, description, can_help, summary, steps, model)
-     values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
-    [
-      user.id,
-      input.category,
-      input.title,
-      input.description,
-      suggestion.can_help,
-      suggestion.summary,
-      JSON.stringify(suggestion.steps),
-      model,
-    ],
-  )
-  return { id: rows[0]!.id, ...suggestion, model, tokens }
+
+  // Parallel requests can all pass the check above, so count again under a per-user lock
+  // before saving. The lock is held only for the count and insert, never the model call.
+  const id = await transaction(async (tx) => {
+    await tx.query("select pg_advisory_xact_lock(hashtext($1))", [user.id])
+    if ((await countRecent(tx, user.id)).rows[0]!.count >= HOURLY_LIMIT) throw limitReached()
+    const { rows } = await tx.query<{ id: string }>(
+      `insert into ai_suggestions (user_id, category, title, description, can_help, summary, steps, model)
+       values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+      [
+        user.id,
+        input.category,
+        input.title,
+        input.description,
+        suggestion.can_help,
+        suggestion.summary,
+        JSON.stringify(suggestion.steps),
+        model,
+      ],
+    )
+    return rows[0]!.id
+  })
+  return { id, ...suggestion, model, tokens, promptVersion: suggestFixPromptVersion }
 }
 
 /** The employee says the suggestion fixed it, so no ticket is needed. */

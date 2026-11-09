@@ -9,6 +9,7 @@ const generateJson = vi.hoisted(() => vi.fn())
 vi.mock("../src/ai/llm", () => ({ generateJson }))
 
 import { app } from "../src/app"
+import { unsafeStep } from "../src/features/assist/logic"
 import { pool } from "../src/db"
 import { createUser } from "./helpers"
 
@@ -120,5 +121,43 @@ describe("ai quick fix", () => {
     const res = await api.post("/assist/suggestions").set(heavyUser.auth).send(problem)
     expect(res.status).toBe(429)
     expect(res.body.error.code).toBe("ai_limit_reached")
+  })
+
+  it("never saves more than the hourly limit, even when requests arrive together", async () => {
+    const burstUser = await createUser("employee")
+    generateJson.mockResolvedValue(answer(goodAnswer))
+    const results = await Promise.all(
+      Array.from({ length: 14 }, () =>
+        api.post("/assist/suggestions").set(burstUser.auth).send(problem),
+      ),
+    )
+    expect(results.filter((r) => r.status === 201)).toHaveLength(10)
+    expect(results.filter((r) => r.status === 429)).toHaveLength(4)
+    const saved = await pool.query(
+      "select count(*)::int as n from ai_suggestions where user_id = $1",
+      [burstUser.id],
+    )
+    expect(saved.rows[0].n).toBe(10)
+  })
+})
+
+describe("safety filter", () => {
+  it.each([
+    "Uninstall and reinstall Office.",
+    "Reinstall the printer driver.",
+    "Restart and press F2 to open the BIOS.",
+    "Start Windows in safe mode.",
+    "Run the program as administrator.",
+    "Send your password to IT.",
+  ])("blocks %s", (step) => {
+    expect(unsafeStep.test(step)).toBe(true)
+  })
+
+  it.each([
+    "Restart the computer.",
+    "Check the cable is plugged in.",
+    "Close Excel and open the file again.",
+  ])("allows %s", (step) => {
+    expect(unsafeStep.test(step)).toBe(false)
   })
 })

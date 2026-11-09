@@ -18,7 +18,9 @@ The quick fix uses one prompt with a validated JSON answer. The natural next ste
 Option A.
 
 - `tickets.resolution` is required to move a ticket to `resolved`.
-- The prompt moves to its own markdown file and every call logs a prompt version alongside the model and tokens.
+- The prompt stays in its own module (`src/ai/prompts/suggest-fix.ts`): the API is bundled into one file for Vercel, and a markdown file would need loader setup in three tools (esbuild, tsx, vitest) for no gain. Every call logs a prompt version, a hash of the prompt text, alongside the model and tokens.
+- The hourly limit is checked again under a per-user advisory lock before a suggestion is saved, so parallel requests cannot exceed it. The lock covers only the count and insert, never the model call.
+- The `eval` workflow runs both case sets on GitHub and commits the results, because the development environment cannot reach the model providers.
 - An eval run is committed as the baseline, and every prompt or model change is compared against it.
 
 ## Consequences

@@ -16,7 +16,8 @@ const only =
     .slice(2)
     .filter((arg) => arg !== "--")
     .at(-1) ?? ""
-const cases: Case[] = readFileSync(join(dir, process.env.EVAL_CASES ?? "cases.jsonl"), "utf8")
+const casesFile = process.env.EVAL_CASES ?? "cases.jsonl"
+const cases: Case[] = readFileSync(join(dir, casesFile), "utf8")
   .trim()
   .split("\n")
   .map((line) => JSON.parse(line))
@@ -70,7 +71,11 @@ console.table([summary])
 
 mkdirSync(join(dir, "results"), { recursive: true })
 writeFileSync(
-  join(dir, "results", `${new Date().toISOString().slice(0, 10)}.json`),
+  join(
+    dir,
+    "results",
+    `${new Date().toISOString().slice(0, 10)}-${casesFile.replace(".jsonl", "")}.json`,
+  ),
   JSON.stringify({ summary, rows }, null, 2),
 )
 process.exit(0)
