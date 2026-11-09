@@ -10,7 +10,7 @@ import { AssetTag } from "@/components/asset-tag"
 import { Pill } from "@/components/ui/pill"
 import { api, ApiError, getMe } from "@/lib/api"
 import { deviceLine, label, timeAgo } from "@/lib/format"
-import { ConfirmFix, ReplyForm, StaffControls } from "./controls"
+import { ConfirmFix, ReplyForm, StaffControls, TicketShortcuts } from "./controls"
 
 export const metadata = { title: "Ticket" }
 
@@ -18,6 +18,7 @@ function describe(event: TicketEvent, names: Map<string, string>) {
   if (event.type === "created") return "Request filed"
   if (event.type === "priority_changed")
     return `Priority set to ${label(event.to_value ?? "").toLowerCase()}`
+  if (event.type === "escalated") return "Escalated to an administrator"
   if (event.type === "assigned") return `Assigned to ${names.get(event.to_value ?? "") ?? "IT"}`
   return `Moved to ${label(event.to_value ?? "").toLowerCase()}`
 }
@@ -49,17 +50,33 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <p className="font-mono text-[13px] text-ink-3">
-          {ticket.ref} · {label(ticket.category)} · filed {timeAgo(ticket.created_at)}
-        </p>
-        <h1 className="text-[28px] leading-[34px] font-medium tracking-[-0.02em]">
-          {ticket.title}
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          <Pill value={ticket.priority} />
-          <Pill value={ticket.status} />
+      <div
+        className={`flex flex-wrap items-center justify-between gap-4 rounded-panel p-7 sm:px-8 ${ticket.is_late ? "bg-peach text-on-peach" : "bg-action text-on-action"}`}
+      >
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="tick font-dot text-[44px] leading-[48px] font-bold text-ink">
+              {ticket.ref}
+            </span>
+            {ticket.is_late && (
+              <Pill value="late" tone="urgent" text={`Late, was due ${timeAgo(ticket.due_at)}`} />
+            )}
+            {ticket.escalated_at && <Pill value="escalated" tone="light" text="Escalated" />}
+          </div>
+          <h1 className="mt-1 text-[28px] leading-8 font-medium tracking-[-0.02em] text-ink">
+            {ticket.title}
+          </h1>
+          <p className="mt-1 text-sm">
+            {label(ticket.category)} · {label(ticket.priority)} priority · {label(ticket.status)} ·
+            filed {timeAgo(ticket.created_at)}
+          </p>
         </div>
+        {isStaff && (
+          <TicketShortcuts
+            ticketId={ticket.id}
+            canEscalate={!ticket.escalated_at && !["resolved", "closed"].includes(ticket.status)}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap items-start gap-6">
@@ -73,8 +90,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           </article>
 
           {ticket.suggestion && (
-            <article className="rounded-card border-[1.5px] border-dashed border-hairline px-6 py-5">
-              <p className="text-sm text-ink-2">Already tried: the AI quick fix suggested this</p>
+            <article className="rounded-card bg-action px-6 py-5 text-on-action">
+              <p className="font-mono text-xs">Quick fix said, before this was filed</p>
               <p className="mt-2">{ticket.suggestion.summary}</p>
               <ol className="mt-2 flex list-decimal flex-col gap-1 pl-6">
                 {ticket.suggestion.steps.map((step) => (
@@ -87,9 +104,9 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           {ticket.comments.map((comment) => (
             <article
               key={comment.id}
-              className={`rounded-card px-6 py-5 ${comment.is_internal ? "bg-sunken" : "bg-surface"}`}
+              className={`rounded-card px-6 py-5 ${comment.is_internal ? "bg-butter text-on-butter" : "bg-surface"}`}
             >
-              <p className="text-sm text-ink-2">
+              <p className={`text-sm ${comment.is_internal ? "" : "text-ink-2"}`}>
                 {comment.author_name} · {timeAgo(comment.created_at)}
                 {comment.is_internal && ` · internal note, hidden from ${ticket.reporter_name}`}
               </p>
@@ -108,7 +125,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
             <ConfirmFix ticketId={ticket.id} resolution={ticket.resolution} />
           )}
           {!isStaff && ticket.status !== "resolved" && (
-            <div className="rounded-panel bg-surface p-6">
+            <div className="rounded-card bg-surface p-6">
               <p className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">
                 {ticket.assignee_name
                   ? `${ticket.assignee_name} is on it`
@@ -118,17 +135,19 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           )}
 
           {device && (
-            <div className="flex flex-col gap-3 rounded-panel bg-surface p-6">
+            <div className="flex flex-col gap-3 rounded-card bg-surface p-6">
               <p className="text-sm text-ink-3">Device</p>
               <AssetTag
                 tag={device.asset_tag}
                 detail={deviceLine(device, device.location)}
+                type={device.type}
+                status={device.status}
                 href={isStaff ? `/devices/${device.id}` : undefined}
               />
             </div>
           )}
 
-          <div className="flex flex-col gap-3 rounded-panel bg-surface p-6">
+          <div className="flex flex-col gap-3 rounded-card bg-surface p-6">
             <p className="text-sm text-ink-3">Activity</p>
             <ol className="flex flex-col gap-3">
               {ticket.events.toReversed().map((event) => (

@@ -37,7 +37,7 @@ export type TicketComment = {
 
 export type TicketEvent = {
   id: string
-  type: "created" | "status_changed" | "assigned" | "priority_changed"
+  type: "created" | "status_changed" | "assigned" | "priority_changed" | "escalated"
   from_value: string | null
   to_value: string | null
   created_at: string

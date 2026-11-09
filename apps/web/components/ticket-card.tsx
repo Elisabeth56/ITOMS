@@ -1,29 +1,33 @@
 import Link from "next/link"
 import type { Ticket } from "@itoms/shared"
 import { label, timeAgo } from "@/lib/format"
+import { TicketTracker } from "./ticket-tracker"
 import { Pill } from "./ui/pill"
 
-export function TicketCard({ ticket, showReporter }: { ticket: Ticket; showReporter: boolean }) {
-  const who = showReporter ? ticket.reporter_name : null
-  const owner = ticket.assignee_name ? `with ${ticket.assignee_name}` : null
-  const meta = [who, owner ?? `filed ${timeAgo(ticket.created_at)}`].filter(Boolean).join(" · ")
-
+/** One request in the reporter's own list. */
+export function TicketCard({ ticket }: { ticket: Ticket }) {
+  const meta = ticket.assignee_name
+    ? `with ${ticket.assignee_name}`
+    : `filed ${timeAgo(ticket.created_at)}`
   return (
     <Link
       href={`/tickets/${ticket.id}`}
-      className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-surface px-6 py-5 transition-transform duration-200 hover:-translate-y-0.5"
+      className="lift flex flex-col gap-4 rounded-card bg-surface p-6 text-ink no-underline"
     >
-      <div className="min-w-0 flex-[1_1_280px]">
-        <p className="font-mono text-[13px] text-ink-3">
-          {ticket.ref} · {label(ticket.category)}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="font-dot text-2xl font-bold">{ticket.ref}</span>
+        <span className="flex gap-2">
+          <Pill value={ticket.category} />
+          <Pill value={ticket.status} />
+        </span>
+      </div>
+      <div>
+        <p className="text-lg font-medium tracking-[-0.01em]">{ticket.title}</p>
+        <p className="text-sm text-ink-3">
+          {label(ticket.category)} · {meta}
         </p>
-        <p className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">{ticket.title}</p>
-        <p className="text-sm text-ink-3">{meta}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <Pill value={ticket.priority} />
-        <Pill value={ticket.status} />
-      </div>
+      <TicketTracker status={ticket.status} />
     </Link>
   )
 }

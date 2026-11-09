@@ -108,6 +108,7 @@ export async function listTickets(user: User, query: ListTicketsQuery) {
     params.push(query[column])
     where.push(`t.${column} = $${params.length}`)
   }
+  if (query.active) where.push("t.status not in ('resolved', 'closed')")
   if (query.late) where.push("t.due_at < now() and t.status not in ('resolved', 'closed')")
   if (query.escalated)
     where.push("t.escalated_at is not null and t.status not in ('resolved', 'closed')")

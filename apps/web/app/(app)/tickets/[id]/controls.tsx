@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect } from "react"
 import {
   statusTransitions,
   ticketPriorities,
@@ -9,7 +9,7 @@ import {
   type TicketStatus,
 } from "@itoms/shared"
 import { FormError } from "@/components/form-error"
-import { Button } from "@/components/ui/button"
+import { Button, Kbd } from "@/components/ui/button"
 import { Select } from "@/components/ui/field"
 import { label } from "@/lib/format"
 import { addComment, escalateTicket, updateTicket } from "../actions"
@@ -34,12 +34,9 @@ export function StaffControls({
 }) {
   const [state, action, pending] = useActionState(updateTicket.bind(null, ticket.id), {})
   const moves = statusTransitions[ticket.status]
-  const [escalation, escalate, escalating] = useActionState(() => escalateTicket(ticket.id), {})
-  const canEscalate =
-    !ticket.escalated_at && ticket.status !== "resolved" && ticket.status !== "closed"
 
   return (
-    <div className="flex flex-col gap-4 rounded-panel bg-surface p-6">
+    <div className="flex flex-col gap-4 rounded-card bg-surface p-6">
       <p className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">
         {ticket.assignee_name ? `With ${ticket.assignee_name}` : "No owner yet"}
       </p>
@@ -122,15 +119,7 @@ export function StaffControls({
           Save changes
         </Button>
       </form>
-      {canEscalate && (
-        <form action={escalate}>
-          <Button variant="quiet" disabled={escalating}>
-            Escalate to an administrator
-          </Button>
-        </form>
-      )}
-      {ticket.escalated_at && <p className="text-ink-2">Escalated to an administrator.</p>}
-      <FormError message={state.error ?? escalation.error} />
+      <FormError message={state.error} />
     </div>
   )
 }
@@ -183,6 +172,7 @@ export function ReplyForm({
     // the key clears the box after a reply is sent
     <form
       action={action}
+      id="reply"
       key={String(state.ok) + pending}
       className="flex flex-col gap-4 rounded-card bg-surface px-6 py-5"
     >
@@ -192,6 +182,11 @@ export function ReplyForm({
       <textarea
         id="body"
         name="body"
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            event.currentTarget.form?.requestSubmit()
+          }
+        }}
         rows={3}
         required
         placeholder={
@@ -212,5 +207,56 @@ export function ReplyForm({
       </div>
       <FormError message={state.error} />
     </form>
+  )
+}
+
+/**
+ * The ticket page's header actions and their keys: E escalates, R jumps to the reply box.
+ */
+export function TicketShortcuts({
+  ticketId,
+  canEscalate,
+}: {
+  ticketId: string
+  canEscalate: boolean
+}) {
+  const [state, escalate, escalating] = useActionState(() => escalateTicket(ticketId), {})
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null
+      if (target?.closest("input, textarea, select") || event.metaKey || event.ctrlKey) return
+      if (event.key.toLowerCase() === "r") {
+        event.preventDefault()
+        document.getElementById("body")?.focus()
+      }
+      if (event.key.toLowerCase() === "e" && canEscalate) {
+        event.preventDefault()
+        document.getElementById("escalate")?.click()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [canEscalate])
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex flex-wrap gap-2">
+        {canEscalate && (
+          <form action={escalate}>
+            <Button id="escalate" variant="signal" disabled={escalating}>
+              Escalate <Kbd>E</Kbd>
+            </Button>
+          </form>
+        )}
+        <a
+          href="#reply"
+          className="lift inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-5 font-medium text-ink no-underline"
+        >
+          Reply <Kbd>R</Kbd>
+        </a>
+      </div>
+      <FormError message={state.error} />
+    </div>
   )
 }

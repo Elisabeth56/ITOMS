@@ -71,6 +71,8 @@ export const listTicketsQuerySchema = z.object({
   // open tickets IT passed up to an administrator
   escalated: z.stringbool().optional(),
   late: z.stringbool().optional(),
+  // work still to do: anything not resolved or closed
+  active: z.stringbool().optional(),
   // IT works the queue soonest-due first; people read their own tickets newest first
   sort: z.enum(["newest", "due"]).default("newest"),
   page: z.coerce.number().int().min(1).default(1),

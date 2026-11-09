@@ -48,16 +48,14 @@ export default async function TodayPage() {
           {unassigned.items.length === 0 ? (
             <Empty title="Every request has an owner." />
           ) : (
-            unassigned.items.map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} showReporter />
-            ))
+            unassigned.items.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)
           )}
 
           <p className="mt-3 text-sm text-ink-3">Being worked on</p>
           {active.length === 0 ? (
             <Empty title="Nothing in progress." />
           ) : (
-            active.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} showReporter />)
+            active.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)
           )}
           <Link
             href="/tickets"

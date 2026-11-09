@@ -292,7 +292,10 @@ describe("late tickets", () => {
     expect(ids).not.toContain(onTime.id)
     expect(lateList.body.items.every((t: { is_late: boolean }) => t.is_late)).toBe(true)
 
-    const queue = await api.get("/tickets?sort=due&page_size=50").set(staff.auth)
+    const queue = await api.get("/tickets?sort=due&active=true&page_size=50").set(staff.auth)
+    expect(
+      queue.body.items.every((t: { status: string }) => !["resolved", "closed"].includes(t.status)),
+    ).toBe(true)
     const dueTimes = queue.body.items.map((t: { due_at: string }) => Date.parse(t.due_at))
     expect(dueTimes).toEqual([...dueTimes].sort((a, b) => a - b))
   })

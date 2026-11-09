@@ -7,6 +7,7 @@ const tones = {
   ok: "bg-sage text-on-sage",
   butter: "bg-butter text-on-butter",
   peach: "bg-peach text-on-peach",
+  light: "bg-surface text-ink",
 }
 export type Tone = keyof typeof tones
 
