@@ -18,7 +18,9 @@ Live: https://itoms-elisabeth-nnamanis-projects.vercel.app
 
 ## Run locally
 
-Prerequisites: Node 22+, pnpm, and a Supabase project.
+Prerequisites: Node 22+, pnpm, and either a Supabase project or Docker for a local one.
+
+Local database: `pnpm db:start` runs Supabase in Docker, and `pnpm db:reset` rebuilds it from `supabase/migrations` and loads `supabase/seed.sql`. `pnpm db:push` applies new migrations to the linked hosted project.
 
 ```bash
 pnpm install

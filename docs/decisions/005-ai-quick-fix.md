@@ -12,7 +12,7 @@ Many requests seen during the internship had a first step the employee could do 
 - The model either gives safe steps or says the request needs IT. The rules for which is which live in `apps/server/src/ai/prompts/suggest-fix.md`.
 - Free providers: Groq first, Gemini as fallback, both through one small module (`src/ai/llm.ts`). With no key configured the feature answers "not available" and the rest of the system is unaffected.
 - No LangChain or LlamaIndex. The whole feature is one HTTP call and a zod schema, under 100 lines; a framework would add dependencies and nothing else.
-- Every suggestion is stored with its outcome (solved, ticket filed, or abandoned). IT sees what the employee already tried, and the report can state how many requests were solved without a ticket.
+- Every suggestion is stored with its outcome (solved or ticket filed; left empty when the employee walks away without saying). IT sees what the employee already tried, and the report can state how many requests were solved without a ticket.
 - Limited to 10 suggestions per person per hour.
 
 ## Consequences

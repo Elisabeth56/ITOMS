@@ -7,14 +7,14 @@
 
 The question was whether a different database would serve ITOMS better. The access patterns decide it:
 
-| Pattern | Who | How often | Shape |
-|---|---|---|---|
-| IT queue | IT staff | Many times a day | Filter by status and priority, sort by due time, join the reporter |
-| My tickets | Employee | A few times a day | Filter by reporter, newest first |
-| Ticket detail | IT staff | Per ticket opened | Ticket, events, comments and AI suggestion by ticket id |
-| Dashboard | IT staff | Daily | Counts and averages over all tickets |
-| Device detail | Everyone | Per visit | Device, current holder, assignment and repair history |
-| Pending change requests | IT staff | Daily | Filter by status, oldest first |
+| Pattern                 | Who      | How often         | Shape                                                              |
+| ----------------------- | -------- | ----------------- | ------------------------------------------------------------------ |
+| IT queue                | IT staff | Many times a day  | Filter by status and priority, sort by due time, join the reporter |
+| My tickets              | Employee | A few times a day | Filter by reporter, newest first                                   |
+| Ticket detail           | IT staff | Per ticket opened | Ticket, events, comments and AI suggestion by ticket id            |
+| Dashboard               | IT staff | Daily             | Counts and averages over all tickets                               |
+| Device detail           | Everyone | Per visit         | Device, current holder, assignment and repair history              |
+| Pending change requests | IT staff | Daily             | Filter by status, oldest first                                     |
 
 Almost every read joins two or three entities, and every write that changes state also writes history in the same transaction.
 
