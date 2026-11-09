@@ -66,6 +66,12 @@ export type Asset = {
 }
 
 export type AssetDetail = Asset & {
+  pending_change: {
+    id: string
+    proposed: Record<string, string>
+    note: string | null
+    created_at: string
+  } | null
   assignments: {
     id: string
     assigned_at: string
@@ -113,4 +119,19 @@ export type Person = {
   department: string | null
   role: UserRole
   is_active: boolean
+}
+
+export type ChangeRequest = {
+  id: string
+  asset_id: string
+  asset_tag: string
+  requested_by: string
+  requested_by_name: string
+  proposed: Record<string, string>
+  note: string | null
+  status: "pending" | "approved" | "rejected"
+  decided_by_name: string | null
+  decided_at: string | null
+  decision_note: string | null
+  created_at: string
 }
