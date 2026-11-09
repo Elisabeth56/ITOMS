@@ -57,3 +57,22 @@ stateDiagram-v2
   resolved --> closed: reporter confirms
   closed --> [*]
 ```
+
+## Rules and where they live
+
+| Rule                                                         | Enforced by                                                                                 |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Employees see only their own tickets and devices             | the SQL of every query (`reporter_id` / holder), so a stranger's record looks missing (404) |
+| Roles: employee, IT staff, administrator                     | `requireRole` middleware, with the role read from the database on every request             |
+| One holder per device, one pending change request per device | partial unique indexes                                                                      |
+| A resolved or closed ticket says what fixed it               | check constraint, plus a 422 from the API                                                   |
+| The activity trail is never edited                           | a trigger that refuses updates on `ticket_events`                                           |
+| Due times follow priority                                    | a trigger on insert and on priority change                                                  |
+| Two people cannot act on the same ticket or request at once  | `select ... for update` inside a transaction                                                |
+| The demo administrator changes nothing                       | `requireUser`, from `profiles.is_demo` (ADR 013)                                            |
+
+## Tests
+
+- `apps/server/tests`: the API over HTTP against a real Postgres built from the migrations (57 tests).
+- `apps/web/e2e`: Playwright runs the three critical flows (file a request; assign, resolve and confirm; approve a device change) against a local Supabase stack in CI.
+- `apps/server/evals`: the quick fix against 47 labelled cases; results are committed per run.
