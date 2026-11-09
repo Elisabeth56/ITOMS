@@ -114,6 +114,7 @@ export type Dashboard = {
     title: string
   })[]
   change_requests: { pending: number }
+  tickets_per_day: { day: string; count: number }[]
 }
 
 export type Person = {

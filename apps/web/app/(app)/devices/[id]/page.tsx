@@ -1,6 +1,9 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { hasRole, type AssetDetail, type Person } from "@itoms/shared"
+import { AssetTag } from "@/components/asset-tag"
+import { ChangeRequestCard } from "@/components/change-request-card"
+import { DotField } from "@/components/dot-field"
 import { Pill } from "@/components/ui/pill"
 import { api, ApiError, getMe } from "@/lib/api"
 import { formatDate, formatNaira, label } from "@/lib/format"
@@ -8,6 +11,13 @@ import { ChangeRequestForm } from "@/components/change-request-form"
 import { DeviceActions } from "./actions-panel"
 
 export const metadata = { title: "Device" }
+
+// the header takes the colour of the device's tag
+const plate: Record<string, string> = {
+  printer: "bg-butter text-on-butter",
+  monitor: "bg-sage text-on-sage",
+  network_device: "bg-peach text-on-peach",
+}
 
 export default async function DevicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,65 +36,93 @@ export default async function DevicePage({ params }: { params: Promise<{ id: str
 
   return (
     <>
-      <div className="flex flex-wrap items-stretch gap-6">
-        {/* keyed on the holder so the tag flips when the device changes hands */}
-        <div
-          key={device.holder_id ?? "nobody"}
-          className="tag-flip flex min-w-0 flex-[1_1_320px] flex-col justify-between gap-5 rounded-card border-[1.5px] border-dashed border-hairline bg-surface p-7"
-        >
-          <div className="flex items-center gap-4">
-            <span
-              aria-hidden
-              className="size-5 flex-none rounded-full border-[1.5px] border-hairline bg-ground"
-            />
-            <h1 className="font-mono text-[40px] leading-[48px] font-medium break-all">
-              {device.asset_tag}
-            </h1>
-          </div>
-          <div>
-            <p className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">
-              {[device.brand, device.model].filter(Boolean).join(" ") || label(device.type)}
-            </p>
-            <p className="text-ink-3">
-              {label(device.type)}
-              {device.holder_name
-                ? ` · held by ${device.holder_name}`
-                : device.location
-                  ? ` · ${device.location}`
-                  : ""}
-            </p>
-          </div>
-          <span className="self-start">
-            <Pill value={device.status} />
-          </span>
+      <Link href={isStaff ? "/devices" : "/my-devices"} className="text-sm no-underline">
+        ← {isStaff ? "Devices" : "My devices"}
+      </Link>
+      <div
+        className={`relative flex flex-wrap items-center gap-8 overflow-hidden rounded-panel p-8 ${plate[device.type] ?? "bg-action text-on-action"}`}
+      >
+        <div className="absolute right-6 bottom-4 hidden md:block">
+          <DotField
+            cols={10}
+            rows={4}
+            pitch={16}
+            lit={["0,3", "1,2", "2,3", "3,2", "4,1", "5,2", "6,1", "7,0"]}
+            on="fill-accent"
+            off="fill-current/15"
+          />
         </div>
+        {/* keyed on the holder so the tag flips when the device changes hands */}
+        <div key={device.holder_id ?? "nobody"} className="tag-flip -rotate-2">
+          <AssetTag tag={device.asset_tag} type="other" status={device.status} big />
+        </div>
+        <div className="relative">
+          <h1 className="text-[28px] leading-8 font-medium tracking-[-0.02em] text-ink">
+            {[device.brand, device.model].filter(Boolean).join(" ") || label(device.type)}
+          </h1>
+          <p className="mt-1">
+            {label(device.type)} · <Pill value={device.status} tone="light" />
+            {device.holder_name && ` · held by ${device.holder_name}`}
+          </p>
+          <dl className="mt-4 flex flex-wrap gap-x-7 gap-y-3">
+            {[
+              ["Serial", device.serial_number],
+              ["Bought", device.purchase_date && formatDate(device.purchase_date)],
+              ["Location", device.location],
+            ].map(([name, value]) => (
+              <div key={name}>
+                <dt className="font-mono text-xs">{name}</dt>
+                <dd className="font-medium text-ink">{value || "Not recorded"}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
 
-        <dl className="grid min-w-0 flex-[999_1_420px] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-6 rounded-card bg-surface p-7">
-          <div>
-            <dt className="text-sm text-ink-3">Serial number</dt>
-            <dd className="font-mono">{device.serial_number ?? "Not recorded"}</dd>
+      {isStaff && device.pending_change && (
+        <ChangeRequestCard
+          request={{
+            id: device.pending_change.id,
+            asset_id: device.id,
+            asset_tag: device.asset_tag,
+            requested_by: device.holder_id ?? "",
+            requested_by_name: device.holder_name ?? "The holder",
+            proposed: device.pending_change.proposed,
+            note: device.pending_change.note,
+            status: "pending",
+            decided_by_name: null,
+            decided_at: null,
+            decision_note: null,
+            created_at: device.pending_change.created_at,
+          }}
+          current={{
+            location: device.location,
+            brand: device.brand,
+            model: device.model,
+            serial_number: device.serial_number,
+          }}
+        />
+      )}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          ["Spent on repairs", formatNaira(spent), "bg-peach text-on-peach"],
+          [
+            "Repairs logged",
+            String(device.maintenance.length).padStart(2, "0"),
+            "bg-sage text-on-sage",
+          ],
+          [
+            "Tickets about it",
+            String(device.tickets.length).padStart(2, "0"),
+            "bg-action text-on-action",
+          ],
+        ].map(([name, value, tint]) => (
+          <div key={name} className={`lift rounded-card px-4.5 py-4 ${tint}`}>
+            <div className="font-mono text-xs">{name}</div>
+            <div className="font-dot text-[36px] leading-[44px] font-bold text-ink">{value}</div>
           </div>
-          <div>
-            <dt className="text-sm text-ink-3">Bought</dt>
-            <dd>{device.purchase_date ? formatDate(device.purchase_date) : "Not recorded"}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-ink-3">Location</dt>
-            <dd>{device.location ?? "Not recorded"}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-ink-3">Repairs logged</dt>
-            <dd className="tabular-nums">{device.maintenance.length}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-ink-3">Spent on repairs</dt>
-            <dd className="tabular-nums">{formatNaira(spent)}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-ink-3">Tickets</dt>
-            <dd className="tabular-nums">{device.tickets.length}</dd>
-          </div>
-        </dl>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-start gap-6">

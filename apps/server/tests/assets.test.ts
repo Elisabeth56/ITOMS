@@ -184,6 +184,9 @@ describe("dashboard", () => {
     expect(res.body.assets.total).toBeGreaterThan(0)
     expect(res.body.recent_activity.length).toBeGreaterThan(0)
     expect(res.body.quick_fix).toHaveProperty("solved")
+    expect(res.body.tickets).toHaveProperty("late")
+    expect(res.body.change_requests).toHaveProperty("pending")
+    expect(res.body.tickets_per_day).toHaveLength(14)
   })
 })
 
