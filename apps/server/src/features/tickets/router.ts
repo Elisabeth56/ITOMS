@@ -6,8 +6,16 @@ import {
   updateTicketSchema,
   type ListTicketsQuery,
 } from "@itoms/shared"
+import { requireRole } from "../../auth"
 import { idParams, validate } from "../../validate"
-import { addComment, createTicket, getTicket, listTickets, updateTicket } from "./logic"
+import {
+  addComment,
+  createTicket,
+  escalateTicket,
+  getTicket,
+  listTickets,
+  updateTicket,
+} from "./logic"
 
 export const ticketsRouter = Router()
 
@@ -36,5 +44,14 @@ ticketsRouter.post(
   validate({ params: idParams, body: createCommentSchema }),
   async (req, res) => {
     res.status(201).json(await addComment(req.user, req.params.id as string, req.body))
+  },
+)
+
+ticketsRouter.post(
+  "/:id/escalate",
+  requireRole("it_staff"),
+  validate({ params: idParams }),
+  async (req, res) => {
+    res.json(await escalateTicket(req.user, req.params.id as string))
   },
 )

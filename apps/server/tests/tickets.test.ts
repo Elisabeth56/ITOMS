@@ -244,3 +244,32 @@ describe("due times and resolutions", () => {
     expect(res.status).toBe(422)
   })
 })
+
+describe("escalation", () => {
+  const escalate = (as: TestUser, id: string) => api.post(`/tickets/${id}/escalate`).set(as.auth)
+
+  it("lets IT staff escalate once, and records it", async () => {
+    const ticket = await fileTicket(employee)
+    const first = await escalate(staff, ticket.id)
+    expect(first.status).toBe(200)
+    expect(first.body.escalated_at).not.toBeNull()
+    expect(first.body.events.at(-1)).toMatchObject({ type: "escalated" })
+
+    const again = await escalate(staff, ticket.id)
+    expect(again.status).toBe(409)
+    expect(again.body.error.code).toBe("already_escalated")
+  })
+
+  it("does not let employees escalate", async () => {
+    const ticket = await fileTicket(employee)
+    expect((await escalate(employee, ticket.id)).status).toBe(403)
+  })
+
+  it("lists open escalated tickets for the admin view", async () => {
+    const ticket = await fileTicket(employee)
+    await escalate(staff, ticket.id)
+    const list = await api.get("/tickets?escalated=true").set(staff.auth)
+    expect(list.body.items.map((t: { id: string }) => t.id)).toContain(ticket.id)
+    expect(list.body.items.every((t: { escalated_at: string | null }) => t.escalated_at)).toBe(true)
+  })
+})

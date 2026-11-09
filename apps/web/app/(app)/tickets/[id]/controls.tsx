@@ -12,7 +12,7 @@ import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/field"
 import { label } from "@/lib/format"
-import { addComment, updateTicket } from "../actions"
+import { addComment, escalateTicket, updateTicket } from "../actions"
 
 // what the button says for each move
 const moveLabels: Partial<Record<TicketStatus, string>> = {
@@ -34,6 +34,9 @@ export function StaffControls({
 }) {
   const [state, action, pending] = useActionState(updateTicket.bind(null, ticket.id), {})
   const moves = statusTransitions[ticket.status]
+  const [escalation, escalate, escalating] = useActionState(() => escalateTicket(ticket.id), {})
+  const canEscalate =
+    !ticket.escalated_at && ticket.status !== "resolved" && ticket.status !== "closed"
 
   return (
     <div className="flex flex-col gap-4 rounded-panel bg-surface p-6">
@@ -119,7 +122,15 @@ export function StaffControls({
           Save changes
         </Button>
       </form>
-      <FormError message={state.error} />
+      {canEscalate && (
+        <form action={escalate}>
+          <Button variant="quiet" disabled={escalating}>
+            Escalate to an administrator
+          </Button>
+        </form>
+      )}
+      {ticket.escalated_at && <p className="text-ink-2">Escalated to an administrator.</p>}
+      <FormError message={state.error ?? escalation.error} />
     </div>
   )
 }

@@ -106,6 +106,8 @@ export async function listTickets(user: User, query: ListTicketsQuery) {
     params.push(query[column])
     where.push(`t.${column} = $${params.length}`)
   }
+  if (query.escalated)
+    where.push("t.escalated_at is not null and t.status not in ('resolved', 'closed')")
   const filter = `where ${where.join(" and ")}`
 
   const total = await pool.query<{ count: number }>(
@@ -231,6 +233,22 @@ export async function addComment(user: User, id: string, input: CreateCommentInp
     [id, user.id, input.body, input.is_internal],
   )
   return { ...rows[0], author_name: user.full_name }
+}
+
+/** IT staff pass a ticket up to an administrator. It stays escalated until resolved. */
+export async function escalateTicket(user: User, id: string) {
+  await transaction(async (tx) => {
+    const ticket = await findTicket(tx, user, id, true)
+    if (ticket.escalated_at) {
+      throw new AppError(409, "already_escalated", "This ticket is already escalated.")
+    }
+    if (ticket.status === "resolved" || ticket.status === "closed") {
+      throw new AppError(409, "cannot_escalate", `A ${ticket.status} ticket cannot be escalated.`)
+    }
+    await tx.query("update tickets set escalated_at = now() where id = $1", [id])
+    await logEvent(tx, id, user.id, "escalated", null, null)
+  })
+  return getTicket(user, id)
 }
 
 const AUTO_CLOSE_DAYS = 3

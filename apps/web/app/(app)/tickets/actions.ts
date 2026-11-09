@@ -55,6 +55,12 @@ export async function updateTicket(
   return state
 }
 
+export async function escalateTicket(id: string): Promise<FormState> {
+  const state = await attempt(() => api(`/tickets/${id}/escalate`, { method: "POST" }))
+  revalidatePath(`/tickets/${id}`)
+  return state
+}
+
 export async function addComment(
   id: string,
   _state: FormState,
