@@ -104,7 +104,9 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
         <aside aria-label="Ticket details" className="flex min-w-0 flex-[1_1_320px] flex-col gap-3">
           {isStaff && <StaffControls ticket={ticket} staff={staff} meId={me.id} />}
-          {isReporter && ticket.status === "resolved" && <ConfirmFix ticketId={ticket.id} />}
+          {isReporter && ticket.status === "resolved" && (
+            <ConfirmFix ticketId={ticket.id} resolution={ticket.resolution} />
+          )}
           {!isStaff && ticket.status !== "resolved" && (
             <div className="rounded-panel bg-surface p-6">
               <p className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">

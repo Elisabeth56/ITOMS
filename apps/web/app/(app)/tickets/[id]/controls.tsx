@@ -50,18 +50,40 @@ export function StaffControls({
         </form>
       )}
 
+      {moves.includes("resolved") && (
+        <form action={action} className="flex flex-col gap-3">
+          <input type="hidden" name="status" value="resolved" />
+          <label htmlFor="resolution" className="font-medium">
+            What fixed it?
+          </label>
+          <textarea
+            id="resolution"
+            name="resolution"
+            rows={3}
+            required
+            placeholder="Replaced the DisplayPort cable"
+            className="w-full rounded-[12px] border-[1.5px] border-hairline bg-ground px-3.5 py-3 placeholder:text-ink-3"
+          />
+          <Button variant="action" disabled={pending} className="self-start">
+            {moveLabels.resolved}
+          </Button>
+        </form>
+      )}
+
       {moves.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {moves.map((status) => (
-            <form key={status} action={action}>
-              <input type="hidden" name="status" value={status} />
-              <Button variant={status === "resolved" ? "action" : "quiet"} disabled={pending}>
-                {ticket.status === "resolved" && status === "in_progress"
-                  ? "Reopen"
-                  : moveLabels[status]}
-              </Button>
-            </form>
-          ))}
+          {moves
+            .filter((status) => status !== "resolved")
+            .map((status) => (
+              <form key={status} action={action}>
+                <input type="hidden" name="status" value={status} />
+                <Button variant="quiet" disabled={pending}>
+                  {ticket.status === "resolved" && status === "in_progress"
+                    ? "Reopen"
+                    : moveLabels[status]}
+                </Button>
+              </form>
+            ))}
         </div>
       )}
 
@@ -103,13 +125,20 @@ export function StaffControls({
 }
 
 /** The reporter confirms the fix, or sends the ticket back. */
-export function ConfirmFix({ ticketId }: { ticketId: string }) {
+export function ConfirmFix({
+  ticketId,
+  resolution,
+}: {
+  ticketId: string
+  resolution: string | null
+}) {
   const [state, action, pending] = useActionState(updateTicket.bind(null, ticketId), {})
   return (
     <div className="flex flex-col gap-4 rounded-panel bg-action p-6 text-on-action">
       <p className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">
         IT says this is fixed. Is it?
       </p>
+      {resolution && <p>What they did: {resolution}</p>}
       <div className="flex flex-wrap gap-2">
         <form action={action}>
           <input type="hidden" name="status" value="closed" />

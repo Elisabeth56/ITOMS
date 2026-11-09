@@ -31,13 +31,17 @@ type Ticket = {
   updated_at: string
   resolved_at: string | null
   closed_at: string | null
+  resolution: string | null
+  due_at: string
+  escalated_at: string | null
 }
 
 const ticketSelect = `
   select t.id, 'IT-' || lpad(t.number::text, 4, '0') as ref, t.title, t.description,
          t.category, t.priority, t.status, t.reporter_id, reporter.full_name as reporter_name,
          t.assignee_id, assignee.full_name as assignee_name, t.asset_id,
-         t.created_at, t.updated_at, t.resolved_at, t.closed_at
+         t.created_at, t.updated_at, t.resolved_at, t.closed_at, t.resolution, t.due_at,
+         t.escalated_at
   from tickets t
   join profiles reporter on reporter.id = t.reporter_id
   left join profiles assignee on assignee.id = t.assignee_id`
@@ -148,7 +152,10 @@ export async function getTicket(user: User, id: string) {
 export async function updateTicket(user: User, id: string, input: UpdateTicketInput) {
   // the reporter may only confirm or reject a fix; everything else is IT staff work
   const reporterOnlyConfirms =
-    input.priority === undefined && input.assignee_id === undefined && input.status !== undefined
+    input.priority === undefined &&
+    input.assignee_id === undefined &&
+    input.resolution === undefined &&
+    input.status !== undefined
   if (!isStaff(user) && !reporterOnlyConfirms) {
     throw new AppError(403, "not_allowed", "Only IT staff can change that.")
   }
@@ -189,6 +196,12 @@ export async function updateTicket(user: User, id: string, input: UpdateTicketIn
           `A ticket cannot go from ${status} to ${input.status}.`,
         )
       }
+      // the database also enforces this; checking here gives the form a clear message
+      if (input.status === "resolved" && !input.resolution) {
+        throw new AppError(422, "resolution_required", "Say what fixed it before resolving.", {
+          fields: { resolution: ["Required to resolve"] },
+        })
+      }
       await logEvent(tx, id, user.id, "status_changed", status, input.status)
       status = input.status
     }
@@ -197,9 +210,10 @@ export async function updateTicket(user: User, id: string, input: UpdateTicketIn
       `update tickets set status = $2::ticket_status, priority = $3, assignee_id = $4,
          resolved_at = case $2::ticket_status when 'resolved' then coalesce(resolved_at, now())
                                               when 'closed' then resolved_at end,
-         closed_at = case $2::ticket_status when 'closed' then now() end
+         closed_at = case $2::ticket_status when 'closed' then now() end,
+         resolution = coalesce($5, resolution)
        where id = $1`,
-      [id, status, priority, assignee_id],
+      [id, status, priority, assignee_id, input.resolution ?? null],
     )
   })
   return getTicket(user, id)

@@ -21,6 +21,9 @@ export type Ticket = {
   created_at: string
   resolved_at: string | null
   closed_at: string | null
+  resolution: string | null
+  due_at: string
+  escalated_at: string | null
 }
 
 export type TicketComment = {
