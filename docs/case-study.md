@@ -26,10 +26,10 @@ The constraints: about 50 users, a few hundred tickets a year, free tiers only, 
 
 ## Results
 
-- Three roles, eleven screens, a public landing page and one-click demo accounts.
+- Three roles with their own home screens, a public landing page and one-click demo accounts.
 - 57 API tests against a real Postgres, and Playwright tests of the three critical flows against a local Supabase stack in CI.
 - The quick fix eval runs on GitHub and commits its results, so quality is tracked per change.
-- Every major choice is recorded as a decision record, including the ones I got wrong and corrected.
+- Every major choice is recorded as a decision record, including one I got wrong and corrected.
 
 ## What I learned
 
