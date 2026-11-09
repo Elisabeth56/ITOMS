@@ -125,7 +125,7 @@ describe("lifecycle", () => {
     const res = await api
       .patch(`/tickets/${ticket.id}`)
       .set(staff.auth)
-      .send({ status: "resolved" })
+      .send({ status: "resolved", resolution: "Replaced the cable." })
     expect(res.status).toBe(409)
     expect(res.body.error.code).toBe("invalid_status_change")
   })
@@ -145,12 +145,12 @@ describe("lifecycle", () => {
     await patch(staff, { status: "in_progress" })
     expect((await patch(employee, { status: "closed" })).status).toBe(409) // not resolved yet
 
-    const resolved = await patch(staff, { status: "resolved" })
+    const resolved = await patch(staff, { status: "resolved", resolution: "Replaced the cable." })
     expect(resolved.body.resolved_at).not.toBeNull()
 
     // reporter says it is still broken, IT fixes it again, reporter confirms
     expect((await patch(employee, { status: "in_progress" })).body.resolved_at).toBeNull()
-    await patch(staff, { status: "resolved" })
+    await patch(staff, { status: "resolved", resolution: "Replaced the cable." })
     const closed = await patch(employee, { status: "closed" })
     expect(closed.body.status).toBe("closed")
     expect(closed.body.closed_at).not.toBeNull()
@@ -184,7 +184,10 @@ describe("automatic closing", () => {
     for (const ticket of [stale, fresh]) {
       await api.patch(`/tickets/${ticket.id}`).set(staff.auth).send({ assignee_id: staff.id })
       await api.patch(`/tickets/${ticket.id}`).set(staff.auth).send({ status: "in_progress" })
-      await api.patch(`/tickets/${ticket.id}`).set(staff.auth).send({ status: "resolved" })
+      await api
+        .patch(`/tickets/${ticket.id}`)
+        .set(staff.auth)
+        .send({ status: "resolved", resolution: "Replaced the cable." })
     }
     await pool.query("update tickets set resolved_at = now() - interval '4 days' where id = $1", [
       stale.id,
@@ -200,5 +203,44 @@ describe("automatic closing", () => {
     expect(closed.body.status).toBe("closed")
     expect(closed.body.events.at(-1)).toMatchObject({ to_value: "closed", actor_name: null })
     expect((await api.get(`/tickets/${fresh.id}`).set(employee.auth)).body.status).toBe("resolved")
+  })
+})
+
+describe("due times and resolutions", () => {
+  const hours = (ticket: { created_at: string; due_at: string }) =>
+    (Date.parse(ticket.due_at) - Date.parse(ticket.created_at)) / 3_600_000
+
+  it("sets the due time from the priority and moves it when the priority changes", async () => {
+    const ticket = await fileTicket(employee)
+    expect(hours(ticket)).toBe(24) // medium by default
+
+    const raised = await api
+      .patch(`/tickets/${ticket.id}`)
+      .set(staff.auth)
+      .send({ priority: "urgent" })
+    expect(hours(raised.body)).toBe(4)
+  })
+
+  it("will not resolve a ticket without saying what fixed it", async () => {
+    const ticket = await fileTicket(employee)
+    const patch = (body: object) => api.patch(`/tickets/${ticket.id}`).set(staff.auth).send(body)
+    await patch({ assignee_id: staff.id })
+    await patch({ status: "in_progress" })
+
+    const missing = await patch({ status: "resolved" })
+    expect(missing.status).toBe(422)
+    expect(missing.body.error.code).toBe("resolution_required")
+
+    const resolved = await patch({ status: "resolved", resolution: "Reseated the toner." })
+    expect(resolved.body.resolution).toBe("Reseated the toner.")
+  })
+
+  it("rejects a resolution sent without resolving", async () => {
+    const ticket = await fileTicket(employee)
+    const res = await api
+      .patch(`/tickets/${ticket.id}`)
+      .set(staff.auth)
+      .send({ resolution: "Nothing yet" })
+    expect(res.status).toBe(422)
   })
 })

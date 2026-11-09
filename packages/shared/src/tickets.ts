@@ -48,9 +48,15 @@ export const updateTicketSchema = z
     status: z.enum(ticketStatuses),
     priority: z.enum(ticketPriorities),
     assignee_id: z.uuid(),
+    // what fixed it; required when moving to resolved, shown to the reporter
+    resolution: z.string().trim().min(1).max(2000),
   })
   .partial()
   .refine((input) => Object.keys(input).length > 0, "Nothing to update")
+  .refine((input) => !input.resolution || input.status === "resolved", {
+    message: "A resolution goes with marking the ticket resolved.",
+    path: ["resolution"],
+  })
 
 export const createCommentSchema = z.object({
   body: z.string().trim().min(1).max(5000),
