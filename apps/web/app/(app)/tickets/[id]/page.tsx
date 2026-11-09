@@ -57,8 +57,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           {ticket.title}
         </h1>
         <div className="flex flex-wrap gap-2">
-          <Pill value={ticket.priority} surface />
-          <Pill value={ticket.status} surface />
+          <Pill value={ticket.priority} />
+          <Pill value={ticket.status} />
         </div>
       </div>
 
@@ -121,7 +121,6 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
             <div className="flex flex-col gap-3 rounded-panel bg-surface p-6">
               <p className="text-sm text-ink-3">Device</p>
               <AssetTag
-                onSurface
                 tag={device.asset_tag}
                 detail={deviceLine(device, device.location)}
                 href={isStaff ? `/devices/${device.id}` : undefined}

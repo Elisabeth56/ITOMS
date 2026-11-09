@@ -1,28 +1,41 @@
 import { label } from "@/lib/format"
 
 const tones = {
-  neutral: "bg-sunken text-ink",
+  neutral: "bg-sunken text-ink-2",
   active: "bg-action text-on-action",
   urgent: "bg-urgent-tint text-urgent font-medium",
+  ok: "bg-sage text-on-sage",
+  butter: "bg-butter text-on-butter",
+  peach: "bg-peach text-on-peach",
 }
+export type Tone = keyof typeof tones
 
 // which values stand out; everything else is neutral, and the word always carries the meaning
-const toneFor: Record<string, keyof typeof tones> = {
+const toneFor: Record<string, Tone> = {
   urgent: "urgent",
-  under_repair: "urgent",
+  under_repair: "peach",
   in_progress: "active",
   assigned: "active",
+  waiting: "butter",
+  resolved: "ok",
+  in_stock: "ok",
+  pending: "butter",
+  approved: "ok",
+  rejected: "urgent",
+  printer: "butter",
+  software: "active",
+  network: "peach",
+  hardware: "peach",
+  account: "ok",
 }
 
-/** A status, priority or device state, written out in words. */
-export function Pill({ value, surface = false }: { value: string; surface?: boolean }) {
-  const tone = toneFor[value] ?? "neutral"
-  const neutral = surface ? "bg-surface text-ink" : tones.neutral
+/** A status, priority, category or device state, written out in words. */
+export function Pill({ value, tone, text }: { value: string; tone?: Tone; text?: string }) {
   return (
     <span
-      className={`rounded-full px-3 py-1.5 text-sm whitespace-nowrap ${tone === "neutral" ? neutral : tones[tone]}`}
+      className={`inline-block rounded-full px-2.5 py-0.5 text-[13px] leading-5 whitespace-nowrap ${tones[tone ?? toneFor[value] ?? "neutral"]}`}
     >
-      {label(value)}
+      {text ?? label(value)}
     </span>
   )
 }

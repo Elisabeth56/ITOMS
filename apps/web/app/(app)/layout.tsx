@@ -1,43 +1,96 @@
-import Link from "next/link"
-import type { ReactNode } from "react"
-import { hasRole } from "@itoms/shared"
-import { Logo } from "@/components/logo"
-import { Nav } from "@/components/nav"
-import { getMe } from "@/lib/api"
+import { Suspense, type ReactNode } from "react"
+import { hasRole, type Dashboard } from "@itoms/shared"
+import { Icon } from "@/components/icons"
+import { Sidebar, type SidebarLink } from "@/components/sidebar"
+import { api, getMe, type Me } from "@/lib/api"
 import { signOut } from "../sign-in/actions"
 
-const employeeLinks = [
-  { href: "/tickets", label: "My requests" },
-  { href: "/my-devices", label: "My devices" },
-]
-const staffLinks = [
-  { href: "/today", label: "Today" },
-  { href: "/tickets", label: "Tickets" },
-  { href: "/devices", label: "Devices" },
-  { href: "/people", label: "People" },
-]
+type Counts = Pick<Dashboard, "tickets" | "change_requests"> | null
+
+function linksFor(me: Me, counts: Counts): SidebarLink[] {
+  if (me.role === "employee") {
+    return [
+      { href: "/home", label: "Home", icon: <Icon name="home" /> },
+      { href: "/tickets/new", label: "Get help", icon: <Icon name="plus" /> },
+      { href: "/tickets", label: "My tickets", icon: <Icon name="list" /> },
+      { href: "/my-devices", label: "My devices", icon: <Icon name="device" /> },
+      { href: "/profile", label: "Profile", icon: <Icon name="user" /> },
+    ]
+  }
+  const shared: SidebarLink[] = [
+    { href: "/tickets", label: "Queue", icon: <Icon name="list" />, count: counts?.tickets.open },
+    { href: "/devices", label: "Devices", icon: <Icon name="device" /> },
+    {
+      href: "/change-requests",
+      label: "Change requests",
+      icon: <Icon name="check" />,
+      count: counts?.change_requests.pending,
+    },
+    { href: "/people", label: "People", icon: <Icon name="people" /> },
+    { href: "/profile", label: "Profile", icon: <Icon name="user" /> },
+  ]
+  if (me.role === "admin") {
+    return [
+      { href: "/home", label: "Overview", icon: <Icon name="grid" /> },
+      {
+        href: "/tickets?escalated=true",
+        label: "Escalated",
+        icon: <Icon name="up" />,
+        count: counts?.tickets.escalated,
+        alert: true,
+      },
+      ...shared,
+    ]
+  }
+  return [
+    shared[0]!,
+    {
+      href: "/tickets?late=true",
+      label: "Late",
+      icon: <Icon name="clock" />,
+      count: counts?.tickets.late,
+      alert: true,
+    },
+    ...shared.slice(1),
+  ]
+}
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const me = await getMe()
-  const links = hasRole(me.role, "it_staff") ? staffLinks : employeeLinks
+  // the sidebar's counts are a nicety: a failed request leaves them blank, not the page
+  const counts: Counts = hasRole(me.role, "it_staff")
+    ? await api<Dashboard>("/dashboard").catch(() => null)
+    : null
+  const initials = me.full_name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+
+  const footer = (
+    <div className="flex items-center gap-2.5 border-t border-white/15 px-1.5 pt-3">
+      <span className="flex size-9 flex-none items-center justify-center rounded-xl bg-butter text-xs font-medium text-on-butter">
+        {initials}
+      </span>
+      <span className="min-w-0 flex-1 text-[13px] leading-tight">
+        <span className="block truncate text-on-accent dark:text-ink">{me.full_name}</span>
+        <form action={signOut}>
+          <button className="underline-offset-4 hover:underline">Sign out</button>
+        </form>
+      </span>
+    </div>
+  )
 
   return (
-    <div className="px-5 pt-5 pb-12 sm:px-8">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <Link href="/" aria-label="ITOMS home">
-            <Logo />
-          </Link>
-          <Nav links={links} />
-          <form action={signOut} className="flex items-center gap-3">
-            <span className="text-ink-2">{me.full_name}</span>
-            <button className="min-h-11 rounded-full px-3 text-ink-3 underline-offset-4 hover:underline">
-              Sign out
-            </button>
-          </form>
-        </header>
-        <main className="flex flex-col gap-8">{children}</main>
+    <div className="flex flex-col gap-4 p-3 md:flex-row md:p-4">
+      <div className="md:w-[248px] md:flex-none">
+        <Suspense>
+          <Sidebar links={linksFor(me, counts)} footer={footer} />
+        </Suspense>
       </div>
+      <main className="min-w-0 flex-1 px-1 pt-4 pb-12 md:px-6">
+        <div className="mx-auto flex max-w-[1080px] flex-col gap-8">{children}</div>
+      </main>
     </div>
   )
 }

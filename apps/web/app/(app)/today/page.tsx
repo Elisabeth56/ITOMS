@@ -84,7 +84,6 @@ export default async function TodayPage() {
           {bench.items.map((device) => (
             <AssetTag
               key={device.id}
-              onSurface
               href={`/devices/${device.id}`}
               tag={device.asset_tag}
               detail={deviceLine(device, device.holder_name ?? device.location)}

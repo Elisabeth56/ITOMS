@@ -5,14 +5,16 @@ import { pool } from "../../db"
 export const dashboardRouter = Router()
 
 dashboardRouter.get("/", async (_req, res) => {
-  const [tickets, assets, fixTime, quickFix, recent] = await Promise.all([
+  const [tickets, assets, fixTime, quickFix, recent, changes] = await Promise.all([
     pool.query(
       `select count(*) filter (where status <> 'closed')::int as open,
               count(*) filter (where status = 'open')::int as unassigned,
               count(*) filter (where status in ('assigned', 'in_progress'))::int as in_progress,
               count(*) filter (where status = 'waiting')::int as waiting,
               count(*) filter (where status = 'resolved')::int as resolved,
-              count(*) filter (where status <> 'closed' and priority = 'urgent')::int as urgent
+              count(*) filter (where status <> 'closed' and priority = 'urgent')::int as urgent,
+              count(*) filter (where status not in ('resolved', 'closed') and due_at < now())::int as late,
+              count(*) filter (where status not in ('resolved', 'closed') and escalated_at is not null)::int as escalated
        from tickets`,
     ),
     pool.query(
@@ -39,6 +41,9 @@ dashboardRouter.get("/", async (_req, res) => {
        left join profiles p on p.id = e.actor_id
        order by e.created_at desc limit 10`,
     ),
+    pool.query(
+      "select count(*)::int as pending from asset_change_requests where status = 'pending'",
+    ),
   ])
 
   res.json({
@@ -47,5 +52,6 @@ dashboardRouter.get("/", async (_req, res) => {
     avg_fix_hours: fixTime.rows[0].avg_fix_hours,
     quick_fix: quickFix.rows[0],
     recent_activity: recent.rows,
+    change_requests: changes.rows[0],
   })
 })

@@ -102,6 +102,8 @@ export type Dashboard = {
     waiting: number
     resolved: number
     urgent: number
+    late: number
+    escalated: number
   }
   assets: { total: number; under_repair: number }
   avg_fix_hours: number | null
@@ -111,6 +113,7 @@ export type Dashboard = {
     ticket_ref: string
     title: string
   })[]
+  change_requests: { pending: number }
 }
 
 export type Person = {

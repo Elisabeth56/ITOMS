@@ -11,7 +11,7 @@ export async function signIn(_state: FormState, form: FormData): Promise<FormSta
     password: String(form.get("password")),
   })
   if (error) return { error: "That email and password do not match. Check them and try again." }
-  redirect("/")
+  redirect("/home")
 }
 
 export async function signOut() {

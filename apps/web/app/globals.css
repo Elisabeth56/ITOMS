@@ -1,51 +1,111 @@
 @import "tailwindcss";
-@import "@fontsource-variable/instrument-sans";
-@import "@fontsource-variable/unbounded";
+@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/doto";
 @import "@fontsource/geist-mono/400.css";
 @import "@fontsource/geist-mono/500.css";
 
-/* ITOMS design tokens (Service tag). Light values here, dark values below. */
+/* ITOMS design tokens (field kit on a quiet desk). Light values here, dark values below. */
 @theme {
-  --color-ground: #eceee9;
-  --color-surface: #f8f9f6;
-  --color-sunken: #e3e6e1;
-  --color-ink: #22282a;
-  --color-ink-2: #4c5456;
-  --color-ink-3: #5c6466;
-  --color-hairline: #aeb5b1;
-  --color-accent: #1f4f4c;
-  --color-on-accent: #f8f9f6;
-  --color-action: #bfe3d6;
-  --color-on-action: #143533;
-  --color-urgent: #7a2a1f;
-  --color-urgent-tint: #f3ddd8;
+  --color-ground: #f2f1ee;
+  --color-surface: #f9f8f6;
+  --color-sunken: #e8e7e3;
+  --color-ink: #252524;
+  --color-ink-2: #54534f;
+  --color-ink-3: #63625e;
+  --color-hairline: #d5d4cf;
 
-  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
+  /* ink blue: the one primary action per view, active nav, focus */
+  --color-accent: #24406b;
+  --color-on-accent: #f9f8f6;
+  /* navy for large surfaces: sidebars, banners, the footer */
+  --color-deep: #1b2f4f;
+  --color-on-deep: #b8c6de;
+  --color-dim-dot: #3a5682;
+  /* signal orange: highlights and dots; signal-strong carries light text */
+  --color-signal: #e0552a;
+  --color-signal-strong: #c24a22;
+
+  /* soft tints, each with the text colour that reads on it */
+  --color-action: #c9d8ee;
+  --color-on-action: #1b3358;
+  --color-butter: #f2dc8c;
+  --color-on-butter: #5a3a10;
+  --color-sage: #c5d8c2;
+  --color-on-sage: #2d4a2a;
+  --color-peach: #f6d5c8;
+  --color-on-peach: #6e2a14;
+
+  /* meaning only: late, escalated, destructive; resolved and approved */
+  --color-urgent: #8a3b2e;
+  --color-urgent-tint: #f1dcd6;
+  --color-ok: #3f6b4e;
+
+  --font-sans: "Inter Tight Variable", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
-  --font-logo: "Unbounded Variable", "Instrument Sans Variable", system-ui, sans-serif;
+  --font-dot: "Doto Variable", "Geist Mono", monospace;
 
-  --radius-tag: 12px;
+  --radius-tag: 14px;
   --radius-card: 20px;
-  --radius-panel: 24px;
+  --radius-panel: 28px;
+  --radius-hero: 36px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-ground: #171b1b;
-    --color-surface: #202626;
-    --color-sunken: #2a3131;
-    --color-ink: #e9ece8;
-    --color-ink-2: #b9c0bd;
-    --color-ink-3: #98a19e;
-    --color-hairline: #4a5553;
-    --color-accent: #8ccfbe;
-    --color-on-accent: #12201e;
-    --color-action: #2c5f58;
-    --color-on-action: #ddf1e9;
-    --color-urgent: #f0b3a8;
-    --color-urgent-tint: #4a2620;
+  :root:not([data-theme="light"]) {
+    --color-ground: #161717;
+    --color-surface: #1f2021;
+    --color-sunken: #262829;
+    --color-ink: #ecebe7;
+    --color-ink-2: #b7b6b1;
+    --color-ink-3: #9a9994;
+    --color-hairline: #34373a;
+    --color-accent: #9db8e4;
+    --color-on-accent: #10213a;
+    --color-deep: #121e33;
+    --color-on-deep: #aebfdc;
+    --color-dim-dot: #2c4266;
+    --color-action: #2a3f60;
+    --color-on-action: #dce7f7;
+    --color-butter: #4a3d14;
+    --color-on-butter: #f2dc8c;
+    --color-sage: #263a28;
+    --color-on-sage: #c5d8c2;
+    --color-peach: #4a2a1e;
+    --color-on-peach: #f6d5c8;
+    --color-urgent: #e7a595;
+    --color-urgent-tint: #3e2420;
+    --color-ok: #9ccbaa;
     color-scheme: dark;
   }
+}
+/* a theme chosen in the profile overrides the system setting */
+:root[data-theme="dark"] {
+  --color-ground: #161717;
+  --color-surface: #1f2021;
+  --color-sunken: #262829;
+  --color-ink: #ecebe7;
+  --color-ink-2: #b7b6b1;
+  --color-ink-3: #9a9994;
+  --color-hairline: #34373a;
+  --color-accent: #9db8e4;
+  --color-on-accent: #10213a;
+  --color-deep: #121e33;
+  --color-on-deep: #aebfdc;
+  --color-dim-dot: #2c4266;
+  --color-action: #2a3f60;
+  --color-on-action: #dce7f7;
+  --color-butter: #4a3d14;
+  --color-on-butter: #f2dc8c;
+  --color-sage: #263a28;
+  --color-on-sage: #c5d8c2;
+  --color-peach: #4a2a1e;
+  --color-on-peach: #f6d5c8;
+  --color-urgent: #e7a595;
+  --color-urgent-tint: #3e2420;
+  --color-ok: #9ccbaa;
+  color-scheme: dark;
 }
 
 body {
@@ -60,7 +120,33 @@ body {
   outline-offset: 2px;
 }
 
-/* the one signature motion: a device tag flips when it changes hands */
+/* ---- motion ---- */
+
+/* headlines and cards rise in once */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+.rise {
+  animation: rise 800ms var(--ease-out-soft) both;
+}
+
+/* the signature: tag and ticket numbers tick in dot by dot */
+@keyframes tick {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.tick {
+  animation: tick 700ms steps(8) 200ms both;
+}
+
+/* a device tag flips when it changes hands */
 @keyframes tag-flip {
   from {
     transform: rotateX(90deg);
@@ -68,10 +154,106 @@ body {
   }
 }
 .tag-flip {
-  animation: tag-flip 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: tag-flip 500ms var(--ease-out-soft);
 }
+
+@keyframes bob {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.bob {
+  animation: bob 6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.bob-slow {
+  animation: bob 7.5s cubic-bezier(0.45, 0, 0.55, 1) -2s infinite;
+}
+
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee {
+  animation: marquee 48s linear infinite;
+}
+
+/* loading rows shimmer instead of a spinner */
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-sunken) 0%,
+    var(--color-ground) 50%,
+    var(--color-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.lift {
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.lift:hover {
+  transform: translateY(-4px);
+}
+
+/* footer links roll up to a copy of themselves on hover */
+.roll {
+  display: inline-block;
+  height: 1.5em;
+  overflow: hidden;
+  vertical-align: top;
+}
+.roll > span {
+  display: flex;
+  flex-direction: column;
+  transition: transform 350ms var(--ease-out-soft);
+}
+.roll:hover > span,
+.roll:focus-visible > span {
+  transform: translateY(-50%);
+}
+
+/* the footer wordmark: each letter turns dot-matrix and orange under the cursor */
+.wordmark span {
+  display: inline-block;
+  transition:
+    transform 350ms var(--ease-out-soft),
+    color 250ms;
+}
+.wordmark span:hover {
+  font-family: var(--font-dot);
+  font-weight: 700;
+  color: var(--color-signal);
+  transform: translateY(-12px);
+}
+
+.zoom-media img {
+  transition: transform 800ms var(--ease-out-soft);
+}
+.zoom-media:hover img {
+  transform: scale(1.04);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .tag-flip {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
