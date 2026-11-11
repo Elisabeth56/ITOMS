@@ -7,7 +7,7 @@ export default function NotFound() {
         That page is not here.
       </h1>
       <p className="text-ink-3">It may have been moved, or you may not have access to it.</p>
-      <ButtonLink href="/">Go to the start</ButtonLink>
+      <ButtonLink href="/home">Go to the start</ButtonLink>
     </main>
   )
 }

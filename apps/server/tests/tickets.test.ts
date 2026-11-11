@@ -244,3 +244,59 @@ describe("due times and resolutions", () => {
     expect(res.status).toBe(422)
   })
 })
+
+describe("escalation", () => {
+  const escalate = (as: TestUser, id: string) => api.post(`/tickets/${id}/escalate`).set(as.auth)
+
+  it("lets IT staff escalate once, and records it", async () => {
+    const ticket = await fileTicket(employee)
+    const first = await escalate(staff, ticket.id)
+    expect(first.status).toBe(200)
+    expect(first.body.escalated_at).not.toBeNull()
+    expect(first.body.events.at(-1)).toMatchObject({ type: "escalated" })
+
+    const again = await escalate(staff, ticket.id)
+    expect(again.status).toBe(409)
+    expect(again.body.error.code).toBe("already_escalated")
+  })
+
+  it("does not let employees escalate", async () => {
+    const ticket = await fileTicket(employee)
+    expect((await escalate(employee, ticket.id)).status).toBe(403)
+  })
+
+  it("lists open escalated tickets for the admin view", async () => {
+    const ticket = await fileTicket(employee)
+    await escalate(staff, ticket.id)
+    const list = await api.get("/tickets?escalated=true").set(staff.auth)
+    expect(list.body.items.map((t: { id: string }) => t.id)).toContain(ticket.id)
+    expect(list.body.items.every((t: { escalated_at: string | null }) => t.escalated_at)).toBe(true)
+  })
+})
+
+describe("late tickets", () => {
+  it("flags late tickets, filters them and sorts the queue by due time", async () => {
+    const late = await fileTicket(employee)
+    const onTime = await fileTicket(employee)
+    await pool.query("update tickets set created_at = now() - interval '2 days' where id = $1", [
+      late.id,
+    ])
+    // the trigger only recomputes on a priority change, so set the old due time directly
+    await pool.query("update tickets set due_at = now() - interval '1 day' where id = $1", [
+      late.id,
+    ])
+
+    const lateList = await api.get("/tickets?late=true&page_size=50").set(staff.auth)
+    const ids = lateList.body.items.map((t: { id: string }) => t.id)
+    expect(ids).toContain(late.id)
+    expect(ids).not.toContain(onTime.id)
+    expect(lateList.body.items.every((t: { is_late: boolean }) => t.is_late)).toBe(true)
+
+    const queue = await api.get("/tickets?sort=due&active=true&page_size=50").set(staff.auth)
+    expect(
+      queue.body.items.every((t: { status: string }) => !["resolved", "closed"].includes(t.status)),
+    ).toBe(true)
+    const dueTimes = queue.body.items.map((t: { due_at: string }) => Date.parse(t.due_at))
+    expect(dueTimes).toEqual([...dueTimes].sort((a, b) => a - b))
+  })
+})

@@ -2,6 +2,7 @@ import { Router } from "express"
 import {
   assignAssetSchema,
   createAssetSchema,
+  createChangeRequestSchema,
   createMaintenanceSchema,
   listAssetsQuerySchema,
   returnAssetSchema,
@@ -10,6 +11,7 @@ import {
 } from "@itoms/shared"
 import { requireRole } from "../../auth"
 import { idParams, validate } from "../../validate"
+import { createChangeRequest } from "../change-requests/logic"
 import {
   assignAsset,
   createAsset,
@@ -32,6 +34,15 @@ assetsRouter.get("/mine", async (req, res) => {
 assetsRouter.get("/:id", id, async (req, res) => {
   res.json(await getAsset(req.user, req.params.id as string))
 })
+
+assetsRouter.post(
+  "/:id/change-requests",
+  id,
+  validate({ body: createChangeRequestSchema }),
+  async (req, res) => {
+    res.status(201).json(await createChangeRequest(req.user, req.params.id as string, req.body))
+  },
+)
 
 // everything below is IT staff work
 assetsRouter.get("/", staff, validate({ query: listAssetsQuerySchema }), async (req, res) => {

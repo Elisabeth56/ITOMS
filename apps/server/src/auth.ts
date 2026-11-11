@@ -4,7 +4,13 @@ import { pool } from "./db"
 import { AppError } from "./errors"
 import { verifyAccessToken } from "./token"
 
-export type User = { id: string; full_name: string; email: string; role: UserRole }
+export type User = {
+  id: string
+  full_name: string
+  email: string
+  role: UserRole
+  is_demo: boolean
+}
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace -- Express only exposes Request for extension this way
@@ -23,12 +29,24 @@ export const requireUser: RequestHandler = async (req, _res, next) => {
 
   // role is read from the database on every request, so a demotion takes effect immediately
   const { rows } = await pool.query<User>(
-    "select id, full_name, email, role from profiles where id = $1 and is_active",
+    "select id, full_name, email, role, is_demo from profiles where id = $1 and is_active",
     [userId],
   )
   if (!rows[0]) throw new AppError(401, "not_signed_in", "Sign in to continue.")
 
-  req.user = rows[0]
+  // the demo password is public: the demo administrator may look but not change anything,
+  // and no demo account may rename itself
+  const user = rows[0]
+  const writes = !["GET", "HEAD", "OPTIONS"].includes(req.method)
+  if (user.is_demo && writes && (user.role === "admin" || req.originalUrl.startsWith("/me"))) {
+    throw new AppError(
+      403,
+      "demo_read_only",
+      "The demo administrator can look around but not change anything. Run ITOMS locally to try it all.",
+    )
+  }
+
+  req.user = user
   next()
 }
 

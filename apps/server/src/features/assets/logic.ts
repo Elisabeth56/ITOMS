@@ -70,9 +70,15 @@ export async function listAssets(query: ListAssetsQuery) {
 
 /** Devices the user currently holds. */
 export async function listMyAssets(user: User) {
-  const { rows } = await pool.query(`${assetSelect} where holder.id = $1 order by a.asset_tag`, [
-    user.id,
-  ])
+  // each with the change the holder is waiting on, if any
+  const { rows } = await pool.query(
+    `select device.*, pending.proposed as pending_change
+     from (${assetSelect} where holder.id = $1) device
+     left join asset_change_requests pending
+       on pending.asset_id = device.id and pending.status = 'pending'
+     order by device.asset_tag`,
+    [user.id],
+  )
   return rows
 }
 
@@ -105,8 +111,15 @@ export async function getAsset(user: User, id: string) {
      from tickets where asset_id = $1 order by created_at desc`,
     [id],
   )
+  // a correction the holder proposed that IT has not decided yet
+  const pendingChange = await pool.query(
+    `select id, proposed, note, created_at from asset_change_requests
+     where asset_id = $1 and status = 'pending'`,
+    [id],
+  )
   return {
     ...asset,
+    pending_change: pendingChange.rows[0] ?? null,
     assignments: assignments.rows,
     maintenance: maintenance.rows,
     tickets: tickets.rows,
@@ -150,20 +163,26 @@ export async function updateAsset(user: User, id: string, input: UpdateAssetInpu
       )
     }
 
-    const changes = { ...input }
-    const columns = Object.keys(changes)
-    const assignments = columns.map((column, i) => `${column} = $${i + 2}`)
-    try {
-      // column names come from the validated schema, never from raw input
-      await tx.query(`update assets set ${assignments.join(", ")} where id = $1`, [
-        id,
-        ...Object.values(changes),
-      ])
-    } catch (error) {
-      rethrowDuplicate(error)
-    }
+    await writeAssetFields(tx, id, input)
   })
   return findAsset(pool, id)
+}
+
+/**
+ * Writes device fields inside the caller's transaction. Column names must come from a
+ * validated schema, never from raw input. A duplicate tag or serial becomes a 409.
+ */
+export async function writeAssetFields(tx: Db, id: string, changes: Record<string, unknown>) {
+  const columns = Object.keys(changes)
+  const assignments = columns.map((column, i) => `${column} = $${i + 2}`)
+  try {
+    await tx.query(`update assets set ${assignments.join(", ")} where id = $1`, [
+      id,
+      ...Object.values(changes),
+    ])
+  } catch (error) {
+    rethrowDuplicate(error)
+  }
 }
 
 export async function assignAsset(user: User, id: string, employeeId: string) {

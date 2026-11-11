@@ -43,7 +43,7 @@ export async function api<T>(path: string, init?: { method?: string; body?: unkn
   return body as T
 }
 
-export type Me = { id: string; full_name: string; email: string; role: UserRole }
+export type Me = { id: string; full_name: string; email: string; role: UserRole; is_demo: boolean }
 
 /** The signed-in person. Cached so a page and its layout share one request. */
 export const getMe = cache(() => api<Me>("/me"))

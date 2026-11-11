@@ -179,3 +179,7 @@ insert into ticket_events (ticket_id, actor_id, type, from_value, to_value, crea
 -- Adaeze asks IT to record where her laptop now lives.
 insert into asset_change_requests (asset_id, requested_by, proposed, note, created_at) values
   ('b0000000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000003', '{"location": "3rd floor, Accounts"}', 'Moved upstairs with the Accounts team on Monday.', now() - interval '1 day');
+
+-- The three accounts anyone can sign in with from the sign-in page.
+update profiles set is_demo = true
+  where email in ('amaka.obi@itoms.example', 'chidi.eze@itoms.example', 'adaeze.okafor@itoms.example');

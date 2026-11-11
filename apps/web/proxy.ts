@@ -26,10 +26,15 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   const onSignIn = path.startsWith("/sign-in")
   // pages a signed-out person must reach: sign in, ask for a reset link, accept an emailed link
-  const isPublic = onSignIn || path.startsWith("/forgot") || path.startsWith("/welcome")
+  // the landing page is public too; everything under the app needs a session
+  const isPublic =
+    path === "/" || onSignIn || path.startsWith("/forgot") || path.startsWith("/welcome")
   if (!data.user && !isPublic) return NextResponse.redirect(new URL("/sign-in", request.url))
-  if (data.user && onSignIn) return NextResponse.redirect(new URL("/", request.url))
+  if (data.user && onSignIn) return NextResponse.redirect(new URL("/home", request.url))
   return response
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] }
+// static files skip the session check: images, the favicon and build output
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|images/|icon.svg|favicon.ico).*)"],
+}

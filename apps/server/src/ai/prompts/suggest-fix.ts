@@ -1,5 +1,7 @@
 // The quick-fix prompt. Kept in its own file so changes to it are easy to review.
 // Run `pnpm eval` after any edit.
+import { createHash } from "node:crypto"
+
 export const suggestFixPrompt = `You are the first line of IT support at an office of about 50 people. An employee is about to send a request to the IT team. Before they do, suggest a quick fix they can safely try themselves, or tell them this one needs IT.
 
 The employee is not technical. Write the way a patient colleague would speak.
@@ -52,3 +54,9 @@ Reply with JSON only. Always include all three fields. Two examples:
 
 {"can_help": false, "summary": "A jam that keeps coming back usually means a worn part, which IT needs to look at.", "steps": []}
 `
+
+// logged with every suggestion so a change in quality can be traced to a prompt edit
+export const suggestFixPromptVersion = createHash("sha256")
+  .update(suggestFixPrompt)
+  .digest("hex")
+  .slice(0, 8)

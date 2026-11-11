@@ -8,6 +8,8 @@ const schema = z.object({
   WEB_ORIGIN: z.url(),
   // shared with the scheduler that closes stale tickets; set automatically on Vercel
   CRON_SECRET: z.string().optional(),
+  // local Supabase only (end-to-end tests); hosted projects use JWKS
+  SUPABASE_JWT_SECRET: z.string().optional(),
   // only needed for inviting people; never expose it to the browser
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   // AI quick fix is optional: with no key set, the endpoint answers "not available"

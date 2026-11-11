@@ -7,10 +7,14 @@ import { env } from "./env"
 import { AppError, errorHandler, notFound } from "./errors"
 import { assetsRouter } from "./features/assets/router"
 import { assistRouter } from "./features/assist/router"
+import { changeRequestsRouter } from "./features/change-requests/router"
 import { dashboardRouter } from "./features/dashboard/router"
 import { closeStaleTickets } from "./features/tickets/logic"
 import { ticketsRouter } from "./features/tickets/router"
-import { usersRouter } from "./features/users/router"
+import { searchRouter } from "./features/search/router"
+import { getProfile, updateProfile, usersRouter } from "./features/users/router"
+import { updateMeSchema } from "@itoms/shared"
+import { validate } from "./validate"
 
 export const app = express()
 
@@ -37,14 +41,19 @@ app.get("/internal/close-stale-tickets", async (req, res) => {
   }
   res.json({ closed: await closeStaleTickets() })
 })
-app.get("/me", requireUser, (req, res) => {
-  res.json(req.user)
+app.get("/me", requireUser, async (req, res) => {
+  res.json(await getProfile(req.user.id))
+})
+app.patch("/me", requireUser, validate({ body: updateMeSchema }), async (req, res) => {
+  res.json(await updateProfile(req.user.id, req.body))
 })
 app.use("/tickets", requireUser, ticketsRouter)
 app.use("/assist", requireUser, assistRouter)
 app.use("/assets", requireUser, assetsRouter)
+app.use("/change-requests", requireUser, changeRequestsRouter)
 app.use("/dashboard", requireUser, requireRole("it_staff"), dashboardRouter)
 app.use("/users", requireUser, usersRouter)
+app.use("/search", requireUser, searchRouter)
 
 app.use(notFound)
 app.use(errorHandler)

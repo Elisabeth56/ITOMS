@@ -6,6 +6,13 @@ import { Pill } from "@/components/ui/pill"
 import { api, requireStaff } from "@/lib/api"
 import { label } from "@/lib/format"
 
+// the same colours as the device tags
+const plate: Record<string, string> = {
+  printer: "bg-butter",
+  monitor: "bg-sage",
+  network_device: "bg-peach",
+}
+
 export const metadata = { title: "Devices" }
 
 export default async function DevicesPage({
@@ -82,25 +89,25 @@ export default async function DevicesPage({
             <Link
               key={device.id}
               href={`/devices/${device.id}`}
-              className="flex flex-col gap-3.5 rounded-tag border-[1.5px] border-dashed border-hairline bg-surface px-5 py-[18px] transition-colors duration-200 hover:border-accent"
+              className={`lift relative flex flex-col gap-3 rounded-card py-5 pr-5 pl-9 text-ink no-underline ${plate[device.type] ?? "bg-action"}`}
             >
-              <span className="flex items-center gap-3">
-                <span
-                  aria-hidden
-                  className="size-3 flex-none rounded-full border-[1.5px] border-hairline bg-ground"
-                />
-                <span className="font-mono font-medium tracking-wide">{device.asset_tag}</span>
+              <span
+                aria-hidden
+                className="absolute top-6 left-3.5 size-2.5 rounded-full bg-ground"
+              />
+              <span className="font-dot text-[26px] leading-[30px] font-bold">
+                {device.asset_tag}
               </span>
               <span>
-                <span className="block">
+                <span className="block font-medium">
                   {[device.brand, device.model].filter(Boolean).join(" ") || label(device.type)}
                 </span>
-                <span className="block text-sm text-ink-3">
+                <span className="block font-mono text-xs text-ink-2">
                   {device.holder_name ?? device.location ?? "No location set"}
                 </span>
               </span>
               <span className="self-start">
-                <Pill value={device.status} />
+                <Pill value={device.status} tone="light" />
               </span>
             </Link>
           ))}

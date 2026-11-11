@@ -26,7 +26,9 @@ Almost every read joins two or three entities, and every write that changes stat
 
 ## Decision
 
-Option A. The engine fits the data. The host stays awake because the daily cron call queries the database, which keeps the free-tier project from pausing.
+Option A. The engine fits the data.
+
+**Correction (2026-11-09):** this ADR first said the daily cron keeps the free-tier project awake. It did not: the hosted project was found paused during the build, most likely because the live API had no database settings, so the cron never reached the database. A keep-alive only works if the job really queries the database; check the cron's last run before relying on it, and wake the project before a demo.
 
 ## Consequences
 

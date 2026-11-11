@@ -5,14 +5,16 @@ import { pool } from "../../db"
 export const dashboardRouter = Router()
 
 dashboardRouter.get("/", async (_req, res) => {
-  const [tickets, assets, fixTime, quickFix, recent] = await Promise.all([
+  const [tickets, assets, fixTime, quickFix, recent, changes, perDay] = await Promise.all([
     pool.query(
       `select count(*) filter (where status <> 'closed')::int as open,
               count(*) filter (where status = 'open')::int as unassigned,
               count(*) filter (where status in ('assigned', 'in_progress'))::int as in_progress,
               count(*) filter (where status = 'waiting')::int as waiting,
               count(*) filter (where status = 'resolved')::int as resolved,
-              count(*) filter (where status <> 'closed' and priority = 'urgent')::int as urgent
+              count(*) filter (where status <> 'closed' and priority = 'urgent')::int as urgent,
+              count(*) filter (where status not in ('resolved', 'closed') and due_at < now())::int as late,
+              count(*) filter (where status not in ('resolved', 'closed') and escalated_at is not null)::int as escalated
        from tickets`,
     ),
     pool.query(
@@ -39,6 +41,17 @@ dashboardRouter.get("/", async (_req, res) => {
        left join profiles p on p.id = e.actor_id
        order by e.created_at desc limit 10`,
     ),
+    pool.query(
+      "select count(*)::int as pending from asset_change_requests where status = 'pending'",
+    ),
+    // new tickets per day for the last two weeks, including days with none (Lagos dates)
+    pool.query(
+      `select to_char(day, 'YYYY-MM-DD') as day, count(t.id)::int as count
+       from generate_series((now() at time zone 'Africa/Lagos')::date - 13,
+                            (now() at time zone 'Africa/Lagos')::date, interval '1 day') day
+       left join tickets t on (t.created_at at time zone 'Africa/Lagos')::date = day::date
+       group by day order by day`,
+    ),
   ])
 
   res.json({
@@ -47,5 +60,7 @@ dashboardRouter.get("/", async (_req, res) => {
     avg_fix_hours: fixTime.rows[0].avg_fix_hours,
     quick_fix: quickFix.rows[0],
     recent_activity: recent.rows,
+    change_requests: changes.rows[0],
+    tickets_per_day: perDay.rows,
   })
 })

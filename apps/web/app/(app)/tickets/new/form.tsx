@@ -1,10 +1,12 @@
 "use client"
 
-import { useActionState, useState, useTransition } from "react"
+import { useActionState, useEffect, useState, useTransition } from "react"
 import type { Asset } from "@itoms/shared"
+import { DotField } from "@/components/dot-field"
 import { FormError } from "@/components/form-error"
-import { Button } from "@/components/ui/button"
+import { Button, Kbd } from "@/components/ui/button"
 import { Field, TextArea } from "@/components/ui/field"
+import { deviceLine } from "@/lib/format"
 import { createTicket, markSolved, suggestFix, type QuickFix } from "../actions"
 
 // what an employee calls each category
@@ -18,24 +20,68 @@ const categories = [
   ["other", "Something else"],
 ] as const
 
+const plates: Record<string, string> = {
+  printer: "bg-butter",
+  monitor: "bg-sage",
+  network_device: "bg-peach",
+}
+const draftKey = "itoms:new-ticket-draft"
+
+type Draft = { category: string; title: string; description: string }
+
+/** Remembers what was typed, so leaving the page by accident loses nothing. */
+function useDraft() {
+  const [draft, setDraft] = useState<Draft>({ category: "", title: "", description: "" })
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(draftKey)
+      if (saved) setDraft(JSON.parse(saved))
+    } catch {
+      // storage can be unavailable (private mode); the form still works
+    }
+  }, [])
+  const update = (change: Partial<Draft>) =>
+    setDraft((current) => {
+      const next = { ...current, ...change }
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(next))
+      } catch {
+        // storage can be unavailable; nothing else depends on it
+      }
+      return next
+    })
+  return [draft, update] as const
+}
+
 export function NewTicketForm({ devices }: { devices: Asset[] }) {
-  const [state, action, sending] = useActionState(createTicket, {})
-  const [category, setCategory] = useState("")
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
+  const [state, action, sending] = useActionState(
+    async (...args: Parameters<typeof createTicket>) => {
+      // a sent request no longer needs its draft
+      try {
+        localStorage.removeItem(draftKey)
+      } catch {
+        // storage can be unavailable; nothing else depends on it
+      }
+      return createTicket(...args)
+    },
+    {},
+  )
+  const [draft, update] = useDraft()
   const [quickFix, setQuickFix] = useState<QuickFix>({})
   const [asking, startAsking] = useTransition()
 
-  const canAsk = category !== "" && title.trim().length >= 3
-  const ask = () =>
-    startAsking(async () => setQuickFix(await suggestFix({ title, description, category })))
+  const canAsk = draft.category !== "" && draft.title.trim().length >= 3
+  const ask = () => startAsking(async () => setQuickFix(await suggestFix(draft)))
   const suggestion = quickFix.suggestion
 
   return (
-    <form action={action} className="mx-auto flex w-full max-w-[680px] flex-col gap-7">
-      <h1 className="text-[44px] leading-[48px] font-medium tracking-[-0.025em]">
-        What do you need help with?
-      </h1>
+    <form action={action} className="flex w-full max-w-[760px] flex-col gap-7">
+      <div>
+        <h1 className="rise text-[36px] leading-10 font-medium tracking-[-0.025em]">
+          What do you need help with?
+        </h1>
+        <p className="mt-1.5 text-ink-2">Takes under a minute. What you type is saved as you go.</p>
+      </div>
 
       <fieldset className="flex flex-col gap-2.5">
         <legend className="mb-2.5 font-medium">It is about</legend>
@@ -43,8 +89,8 @@ export function NewTicketForm({ devices }: { devices: Asset[] }) {
           {categories.map(([value, text]) => (
             <label
               key={value}
-              className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 transition-colors duration-200 ${
-                category === value ? "bg-accent text-on-accent" : "bg-surface"
+              className={`lift flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-sm transition-colors duration-200 ${
+                draft.category === value ? "bg-accent text-on-accent" : "bg-surface"
               }`}
             >
               <input
@@ -52,9 +98,9 @@ export function NewTicketForm({ devices }: { devices: Asset[] }) {
                 name="category"
                 value={value}
                 required
-                checked={category === value}
-                onChange={() => setCategory(value)}
-                className="accent-action"
+                checked={draft.category === value}
+                onChange={() => update({ category: value })}
+                className="accent-signal"
               />
               {text}
             </label>
@@ -68,43 +114,59 @@ export function NewTicketForm({ devices }: { devices: Asset[] }) {
         name="title"
         required
         maxLength={150}
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
+        value={draft.title}
+        onChange={(event) => update({ title: event.target.value })}
         errors={state.fields?.title}
-        style={{ background: "var(--color-surface)" }}
       />
       <TextArea
         label="Anything IT should know"
         name="description"
         hint="When it started, what you already tried, how urgent it is for you."
         required
-        value={description}
-        onChange={(event) => setDescription(event.target.value)}
+        value={draft.description}
+        onChange={(event) => update({ description: event.target.value })}
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            event.currentTarget.form?.requestSubmit()
+          }
+        }}
         errors={state.fields?.description}
-        style={{ background: "var(--color-surface)" }}
       />
 
       <section
         aria-label="Quick fix"
         aria-live="polite"
-        className="flex flex-col gap-4 rounded-card bg-sunken p-6"
+        className="relative flex flex-col gap-3.5 overflow-hidden rounded-panel bg-action p-7 text-on-action"
       >
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">
-            {suggestion?.can_help ? "A quick fix to try first" : "Want a quick fix to try first?"}
-          </h2>
-          <span className="text-sm text-ink-2">Optional · suggested by AI, so it can be wrong</span>
+        <div className="absolute top-5 right-5 hidden sm:block">
+          <DotField
+            cols={6}
+            rows={3}
+            pitch={14}
+            lit={["0,1", "1,2", "2,1", "3,0"]}
+            on="fill-accent"
+            off="fill-on-action/15"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-full border border-current px-2.5 py-0.5 font-mono text-xs">
+            Quick fix · AI
+          </span>
+          <span className="text-[13px]">Optional, and it can be wrong</span>
         </div>
 
         {!suggestion && (
           <>
-            <p className="text-ink-2">
-              Some problems have a simple first step. Your description is sent to an AI assistant,
-              so leave out passwords.
+            <h2 className="text-2xl font-medium tracking-[-0.02em] text-ink">
+              Want a quick fix to try first?
+            </h2>
+            <p className="max-w-[56ch]">
+              Some problems have a safe first step. Your description goes to an AI assistant, so
+              leave out passwords.
             </p>
             <Button
               type="button"
-              variant="quiet"
+              variant="light"
               onClick={ask}
               disabled={!canAsk || asking}
               className="self-start"
@@ -113,31 +175,32 @@ export function NewTicketForm({ devices }: { devices: Asset[] }) {
             </Button>
           </>
         )}
-        {quickFix.error && <p className="text-ink-2">{quickFix.error}</p>}
+        {quickFix.error && <p>{quickFix.error}</p>}
 
         {suggestion && (
           <>
-            <p>{suggestion.summary}</p>
+            <h2 className="text-2xl font-medium tracking-[-0.02em] text-ink">
+              {suggestion.can_help ? "Try this first." : "This one is for IT."}
+            </h2>
+            <p className="max-w-[56ch]">{suggestion.summary}</p>
             {suggestion.can_help ? (
               <>
-                <ol className="flex list-decimal flex-col gap-2 pl-6">
+                <ol className="flex list-decimal flex-col gap-2 pl-6 text-ink">
                   {suggestion.steps.map((step) => (
                     <li key={step}>{step}</li>
                   ))}
                 </ol>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button type="button" onClick={() => markSolved(suggestion.id)}>
+                  <Button type="button" variant="strong" onClick={() => markSolved(suggestion.id)}>
                     That fixed it
                   </Button>
-                  <span className="text-ink-2">
-                    Still stuck? Carry on and send it to IT. They will see you tried this.
+                  <span className="text-sm">
+                    Still stuck? Send it to IT below. They will see you tried this.
                   </span>
                 </div>
               </>
             ) : (
-              <p className="text-ink-2">
-                Send the request below and the IT team will take it from here.
-              </p>
+              <p>Send the request below and the IT team will take it from here.</p>
             )}
             <input type="hidden" name="suggestion_id" value={suggestion.id} />
           </>
@@ -145,51 +208,45 @@ export function NewTicketForm({ devices }: { devices: Asset[] }) {
       </section>
 
       {devices.length > 0 && (
-        <fieldset className="flex flex-col">
+        <fieldset>
           <legend className="mb-2.5 font-medium">Which device?</legend>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+          <div className="flex flex-wrap gap-2.5">
             {devices.map((device) => (
               <label
                 key={device.id}
-                className="flex cursor-pointer items-center gap-3 rounded-tag border-[1.5px] border-dashed border-hairline bg-surface px-4 py-3.5 has-checked:border-solid has-checked:border-accent"
+                className={`lift relative flex min-h-14 cursor-pointer items-center gap-3 rounded-tag py-3 pr-4 pl-8 outline-offset-2 has-checked:outline-2 has-checked:outline-accent ${plates[device.type] ?? "bg-action"}`}
               >
-                <input
-                  type="radio"
-                  name="asset_id"
-                  value={device.id}
-                  className="size-[18px] accent-accent"
+                <span
+                  aria-hidden
+                  className="absolute top-1/2 left-2.5 -mt-[5px] size-2.5 rounded-full bg-ground"
                 />
+                <input type="radio" name="asset_id" value={device.id} className="accent-accent" />
                 <span>
-                  <span className="block font-mono font-medium tracking-wide">
-                    {device.asset_tag}
-                  </span>
-                  <span className="block text-sm text-ink-3">
-                    {[device.brand, device.model].filter(Boolean).join(" ")}
-                  </span>
+                  <span className="block font-dot text-lg font-bold">{device.asset_tag}</span>
+                  <span className="block font-mono text-xs text-ink-2">{deviceLine(device)}</span>
                 </span>
               </label>
             ))}
-            <label className="flex cursor-pointer items-center gap-3 rounded-tag border-[1.5px] border-dashed border-hairline bg-surface px-4 py-3.5 has-checked:border-solid has-checked:border-accent">
+            <label className="flex min-h-14 cursor-pointer items-center gap-3 rounded-tag border-[1.5px] border-dashed border-hairline px-4 text-sm text-ink-2">
               <input
                 type="radio"
                 name="asset_id"
                 value=""
                 defaultChecked
-                className="size-[18px] accent-accent"
+                className="accent-accent"
               />
-              <span>
-                <span className="block font-medium">Not sure, or another device</span>
-                <span className="block text-sm text-ink-3">IT will work it out</span>
-              </span>
+              Not sure, or another device
             </label>
           </div>
         </fieldset>
       )}
 
       <FormError message={state.error} />
-      <Button variant="strong" disabled={sending} className="min-h-12 self-start px-7">
-        {sending ? "Sending" : "Send to IT"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="strong" disabled={sending} className="min-h-12 px-7">
+          {sending ? "Sending" : "Send to IT"} <Kbd>⌘↵</Kbd>
+        </Button>
+      </div>
     </form>
   )
 }

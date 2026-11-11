@@ -1,0 +1,47 @@
+name: eval
+
+# Scores the AI quick fix against the golden cases and commits the results, so every
+# prompt or model change leaves a baseline in git. Needs the GROQ_API_KEY repo secret.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - apps/server/src/ai/**
+      - apps/server/src/features/assist/**
+      - apps/server/evals/**
+
+permissions:
+  contents: write
+
+jobs:
+  eval:
+    # forks get no secrets, so only run for branches in this repository
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run the eval
+        working-directory: apps/server
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # the eval never touches the database or auth; these only satisfy env validation
+          DATABASE_URL: postgres://unused@localhost/unused
+          SUPABASE_URL: http://localhost:54321
+          WEB_ORIGIN: http://localhost:3000
+        run: |
+          pnpm exec tsx evals/run.ts
+          EVAL_CASES=cases-unseen.jsonl pnpm exec tsx evals/run.ts
+      - name: Commit the results
+        run: |
+          git config user.name "Elisabeth56"
+          git config user.email "nnamanielisabeth@gmail.com"
+          git add apps/server/evals/results
+          git diff --cached --quiet || (git commit -m "record eval results" && git push)

@@ -24,6 +24,7 @@ export type Ticket = {
   resolution: string | null
   due_at: string
   escalated_at: string | null
+  is_late: boolean
 }
 
 export type TicketComment = {
@@ -36,7 +37,7 @@ export type TicketComment = {
 
 export type TicketEvent = {
   id: string
-  type: "created" | "status_changed" | "assigned" | "priority_changed"
+  type: "created" | "status_changed" | "assigned" | "priority_changed" | "escalated"
   from_value: string | null
   to_value: string | null
   created_at: string
@@ -66,6 +67,12 @@ export type Asset = {
 }
 
 export type AssetDetail = Asset & {
+  pending_change: {
+    id: string
+    proposed: Record<string, string>
+    note: string | null
+    created_at: string
+  } | null
   assignments: {
     id: string
     assigned_at: string
@@ -95,6 +102,8 @@ export type Dashboard = {
     waiting: number
     resolved: number
     urgent: number
+    late: number
+    escalated: number
   }
   assets: { total: number; under_repair: number }
   avg_fix_hours: number | null
@@ -104,6 +113,8 @@ export type Dashboard = {
     ticket_ref: string
     title: string
   })[]
+  change_requests: { pending: number }
+  tickets_per_day: { day: string; count: number }[]
 }
 
 export type Person = {
@@ -113,4 +124,30 @@ export type Person = {
   department: string | null
   role: UserRole
   is_active: boolean
+  is_demo: boolean
+  created_at: string
+}
+
+/** A device in the holder's own list, with the change they proposed and IT has not decided. */
+export type MyAsset = Asset & { pending_change: Record<string, string> | null }
+
+export type ChangeRequest = {
+  id: string
+  asset_id: string
+  asset_tag: string
+  requested_by: string
+  requested_by_name: string
+  proposed: Record<string, string>
+  note: string | null
+  status: "pending" | "approved" | "rejected"
+  decided_by_name: string | null
+  decided_at: string | null
+  decision_note: string | null
+  created_at: string
+}
+
+export type SearchResults = {
+  tickets: { id: string; ref: string; title: string }[]
+  devices: { id: string; asset_tag: string; name: string; holder_name: string | null }[]
+  people: { id: string; full_name: string; email: string; role: UserRole }[]
 }

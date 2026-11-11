@@ -184,6 +184,9 @@ describe("dashboard", () => {
     expect(res.body.assets.total).toBeGreaterThan(0)
     expect(res.body.recent_activity.length).toBeGreaterThan(0)
     expect(res.body.quick_fix).toHaveProperty("solved")
+    expect(res.body.tickets).toHaveProperty("late")
+    expect(res.body.change_requests).toHaveProperty("pending")
+    expect(res.body.tickets_per_day).toHaveLength(14)
   })
 })
 
@@ -218,5 +221,40 @@ describe("people", () => {
 
     const self = await api.patch(`/users/${admin.id}`).set(admin.auth).send({ role: "employee" })
     expect(self.status).toBe(409)
+  })
+})
+
+describe("own profile", () => {
+  it("lets people change their own name and department, but not their role", async () => {
+    const res = await api
+      .patch("/me")
+      .set(employee.auth)
+      .send({ full_name: "Ada Okafor", department: "Finance" })
+    expect(res.body).toMatchObject({
+      full_name: "Ada Okafor",
+      department: "Finance",
+      role: "employee",
+    })
+
+    const sneaky = await api.patch("/me").set(employee.auth).send({ role: "admin" })
+    expect(sneaky.status).toBe(422)
+    expect((await api.get("/me").set(employee.auth)).body.role).toBe("employee")
+  })
+})
+
+describe("search", () => {
+  it("finds devices and people for IT, and only your own things for employees", async () => {
+    const device = await addDevice({ model: "Searchable 9000" })
+    await api.post(`/assets/${device.id}/assign`).set(staff.auth).send({ employee_id: employee.id })
+
+    const staffResults = await api.get("/search?q=Searchable").set(staff.auth)
+    expect(staffResults.body.devices.map((d: { id: string }) => d.id)).toContain(device.id)
+    expect((await api.get("/search?q=Test").set(staff.auth)).body.people.length).toBeGreaterThan(0)
+
+    expect((await api.get("/search?q=Searchable").set(employee.auth)).body.devices).toHaveLength(1)
+    expect(
+      (await api.get("/search?q=Searchable").set(otherEmployee.auth)).body.devices,
+    ).toHaveLength(0)
+    expect((await api.get("/search?q=Test").set(employee.auth)).body.people).toHaveLength(0)
   })
 })

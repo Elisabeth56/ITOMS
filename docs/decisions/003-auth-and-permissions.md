@@ -17,6 +17,7 @@ Three roles (employee, IT staff, admin), each a superset of the one before. Acco
 
 - Writing our own password storage is avoided.
 - Token verification uses the project's public signing keys (JWKS), so the project must use Supabase's asymmetric signing keys.
+- The end-to-end tests run against a local Supabase stack, which may sign with a shared secret. Setting `SUPABASE_JWT_SECRET` lets the API accept those HS256 tokens; it is never set in production, where only JWKS-verified tokens pass.
 
 ## Revisit if
 

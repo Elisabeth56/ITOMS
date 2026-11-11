@@ -55,6 +55,12 @@ export async function updateTicket(
   return state
 }
 
+export async function escalateTicket(id: string): Promise<FormState> {
+  const state = await attempt(() => api(`/tickets/${id}/escalate`, { method: "POST" }))
+  revalidatePath(`/tickets/${id}`)
+  return state
+}
+
 export async function addComment(
   id: string,
   _state: FormState,
@@ -67,5 +73,15 @@ export async function addComment(
     }),
   )
   revalidatePath(`/tickets/${id}`)
+  return state
+}
+
+/** Keyboard shortcut A in the queue. */
+export async function assignToMe(id: string): Promise<FormState> {
+  const me = await api<{ id: string }>("/me")
+  const state = await attempt(() =>
+    api(`/tickets/${id}`, { method: "PATCH", body: { assignee_id: me.id } }),
+  )
+  revalidatePath("/tickets")
   return state
 }

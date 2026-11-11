@@ -1,0 +1,6 @@
+version: 2
+secret:
+  ignored_matches:
+    # the shared password of the public demo accounts, printed on the sign-in page on purpose
+    - name: public demo password
+      match: itoms-demo-2026

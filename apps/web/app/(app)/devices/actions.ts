@@ -36,3 +36,17 @@ export async function changeDevice(
   revalidatePath(`/devices/${id}`)
   return state
 }
+
+/** The holder proposes corrections; only the fields they filled in are sent. */
+export async function requestChange(
+  id: string,
+  _state: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const { note, ...proposed } = formValues(form)
+  const state = await attempt(() =>
+    api(`/assets/${id}/change-requests`, { method: "POST", body: { proposed, note } }),
+  )
+  revalidatePath(`/devices/${id}`)
+  return state
+}

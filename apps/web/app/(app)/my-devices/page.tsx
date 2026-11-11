@@ -26,6 +26,8 @@ export default async function MyDevicesPage() {
               href={`/devices/${device.id}`}
               tag={device.asset_tag}
               detail={[device.brand, device.model].filter(Boolean).join(" ")}
+              type={device.type}
+              status={device.status}
             />
           ))}
         </div>
