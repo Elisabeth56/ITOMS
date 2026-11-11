@@ -25,6 +25,9 @@ test.describe.serial("critical flows", () => {
 
   test("B: IT takes it, fixes it, and the employee confirms", async ({ browser }) => {
     const it = await signIn(browser, accounts.staff)
+    // the queue is IT's home; it must render with its filters, not just the ticket page
+    await expect(it.getByRole("heading", { name: "Queue" })).toBeVisible()
+    await expect(it.getByRole("group", { name: "Filter" })).toBeVisible()
     await it.goto(ticketUrl)
     await it.getByRole("button", { name: "Assign to me" }).click()
     await it.getByRole("button", { name: "Start work" }).click()

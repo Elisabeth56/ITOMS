@@ -3,15 +3,9 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { queueFilters, type QueueFilter } from "@/lib/queue"
 
 const storageKey = "itoms:queue-filter"
-export const queueFilters = [
-  { key: "all", label: "All open" },
-  { key: "unassigned", label: "Unassigned" },
-  { key: "mine", label: "Mine" },
-  { key: "late", label: "Late" },
-] as const
-export type QueueFilter = (typeof queueFilters)[number]["key"]
 
 /** The queue's filter pills. The last one used is remembered and restored next visit. */
 export function QueueFilters({ current, chosen }: { current: QueueFilter; chosen: boolean }) {

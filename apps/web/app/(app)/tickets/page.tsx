@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { hasRole, ticketStatuses, type Dashboard, type Page, type Ticket } from "@itoms/shared"
 import { Empty } from "@/components/empty"
-import { QueueFilters, queueFilters, type QueueFilter } from "@/components/queue-filters"
+import { QueueFilters } from "@/components/queue-filters"
 import { QueueTable } from "@/components/queue-table"
 import { TicketCard } from "@/components/ticket-card"
 import { ButtonLink, Kbd } from "@/components/ui/button"
 import { api, getMe, type Me } from "@/lib/api"
 import { label } from "@/lib/format"
+import { queueFilters, type QueueFilter } from "@/lib/queue"
 
 export const metadata = { title: "Tickets" }
 
