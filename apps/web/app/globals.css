@@ -108,6 +108,8 @@
   color-scheme: dark;
 }
 
+/* html too, so no white shows at the window edges or when a page bounces on scroll */
+html,
 body {
   background: var(--color-ground);
   color: var(--color-ink);

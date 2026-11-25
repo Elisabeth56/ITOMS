@@ -1,10 +1,19 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
 import "./globals.css"
 
 export const metadata: Metadata = {
   title: { default: "ITOMS", template: "%s · ITOMS" },
   description: "One place for IT requests, devices and their repair history.",
+  icons: { apple: "/icons/apple-touch-icon.png" },
+}
+
+// the browser bar and the installed app's title bar take the page's ground colour
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f1ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#161717" },
+  ],
 }
 
 // applies the theme chosen on the profile page before the first paint, so there is no flash
